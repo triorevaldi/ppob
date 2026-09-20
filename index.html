@@ -53,7 +53,8 @@
         <h1>Expense Manager</h1><p class="muted">Record and manage workshop expenses.</p>
         <section><form id="expenseForm">
           <div class="wide"><label>Expense name</label><input id="expenseItem" required></div>
-          <div><label>Amount (IDR)</label><input id="expenseAmount" type="number" min="0" required></div>
+          <div><label>Qty</label><input id="expenseQty" type="number" min="1" value="1" required></div>
+          <div><label>Expense amount (IDR)</label><input id="expenseAmount" type="number" min="0" required></div>
           <div><label>Date</label><input id="expenseDate" readonly></div>
           <div class="wide"><label>Note</label><input id="expenseNote"></div>
           <button class="primary">Add expense</button>
