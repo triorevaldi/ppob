@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded',()=>{
 const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1';
 let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),incomeEditing=null,expenseEditing=null,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},recordMonth=r=>{let p=String(r.date||'').split('/');return p.length===3?p[2]+'-'+p[1]:''};
 $('date').value=today();$('expenseDate').value=today();$('month').value=monthKey();
@@ -39,3 +40,4 @@ function show(p){$('dashboard').hidden=p!=='dashboard';$('income').hidden=p!=='i
 $('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
 renderIncome();renderExpenses();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
+});
