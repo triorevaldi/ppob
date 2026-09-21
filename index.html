@@ -70,8 +70,9 @@
           <div><label>Qty</label><input id="stockQty" type="number" min="1" value="1" required></div>
           <div><label>Purchase amount (IDR)</label><input id="stockAmount" type="number" min="0" required></div>
           <div><label>Date</label><input id="stockDate" readonly></div>
-          <div><label>Stock</label><input id="stockQtyTotal" type="number" min="1" required></div>
-          <div><label>Selling price (IDR)</label><input id="sellingPrice" type="number" min="0" required></div>
+          <div><label>Initial stock</label><input id="stockInitial" type="number" min="1" required></div>
+          <div><label>Current stock</label><input id="stockCurrent" type="number" min="0" required></div>
+          <div><label>Selling price / Qty (IDR)</label><input id="sellingPrice" type="number" min="0" readonly></div>
           <button class="primary">Add stock</button>
         </form><div id="stockTable"></div></section>
         <div class="sticky-summary" id="stockSummary"></div>
