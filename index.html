@@ -39,7 +39,7 @@
 
       <div id="income" hidden>
         <h1>Income Manager</h1><p class="muted">Record and manage workshop income.</p>
-        <section><form id="incomeForm">
+        <section><div class="table-toolbar"><button type="button" id="incomeSort">Sort: Latest first</button></div><form id="incomeForm">
           <div class="wide"><label>Item name</label><input id="item" required></div>
           <div><label>Qty</label><input id="qty" type="number" min="1" value="1" required></div>
           <div><label>Income amount (IDR)</label><input id="amount" type="number" min="0" required></div>
@@ -52,7 +52,7 @@
 
       <div id="expenses" hidden>
         <h1>Expense Manager</h1><p class="muted">Record and manage workshop expenses.</p>
-        <section><form id="expenseForm">
+        <section><div class="table-toolbar"><button type="button" id="expenseSort">Sort: Latest first</button></div><form id="expenseForm">
           <div class="wide"><label>Expense name</label><input id="expenseItem" required></div>
           <div><label>Qty</label><input id="expenseQty" type="number" min="1" value="1" required></div>
           <div><label>Expense amount (IDR)</label><input id="expenseAmount" type="number" min="0" required></div>
