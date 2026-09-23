@@ -327,3 +327,7 @@ th,td {
         height: 280px
     }
 }
+
+.table-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px}
+.income-today.highlight{background:#ecfdf3}
+.expense-today.highlight{background:#fff1f2}
