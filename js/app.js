@@ -83,7 +83,38 @@ window.delStock=id=>{
   }
 };
 function show(p){$('dashboard').hidden=p!=='dashboard';$('income').hidden=p!=='income';$('expenses').hidden=p!=='expenses';$('stock').hidden=p!=='stock';$('bd').classList.toggle('active',p==='dashboard');$('bi').classList.toggle('active',p==='income');$('be').classList.toggle('active',p==='expenses');$('bs').classList.toggle('active',p==='stock');if(p==='income')$('date').value=today();if(p==='expenses')$('expenseDate').value=today();if(p==='stock')$('stockDate').value=today();if(p==='dashboard')renderDashboard()}
-$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
+
+$('exportData').onclick=()=>{
+  const backup={app:'PPOB',formatVersion:1,exportedAt:new Date().toISOString(),income:incomeData,expenses:expenseData,stock:stockData};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='ppob-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  $('backupStatus').textContent='Backup exported. Keep the JSON file somewhere safe.';
+};
+$('importFile').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const parsed=JSON.parse(await file.text());
+    if(!parsed||parsed.app!=='PPOB'||parsed.formatVersion!==1||!Array.isArray(parsed.income)||!Array.isArray(parsed.expenses)||!Array.isArray(parsed.stock))throw new Error('This file is not a supported PPOB backup.');
+    if(!confirm('Import this backup and replace all current income, expense, and stock records? This cannot be undone.')){e.target.value='';return}
+    incomeData=parsed.income;expenseData=parsed.expenses;stockData=parsed.stock;
+    localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
+    localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));
+    localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
+    incomeEditing=expenseEditing=stockEditing=null;
+    $('incomeForm').reset();$('expenseForm').reset();$('stockForm').reset();
+    $('qty').value=$('expenseQty').value=$('stockQty').value=1;
+    $('date').value=$('expenseDate').value=$('stockDate').value=today();
+    $('incomeForm').querySelector('button').textContent='Add income';
+    $('expenseForm').querySelector('button').textContent='Add expense';
+    $('stockForm').querySelector('button').textContent='Add stock';
+    renderIncome();renderExpenses();renderStock();renderDashboard();
+    $('backupStatus').textContent='Backup imported successfully.';
+  }catch(err){$('backupStatus').textContent=err.message||'Could not read this backup file.'}
+  e.target.value='';
+};
+\n$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
 renderIncome();renderExpenses();renderStock();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
