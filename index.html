@@ -23,6 +23,7 @@
       <div id="dashboard">
         <h1>Dashboard</h1>
         <p class="muted">Workshop financial overview.</p>
+        <section class="backup-card"><h2>Data backup</h2><p class="muted">Export all income, expense, and stock records to a JSON file, or import a previous backup. Importing replaces the current records on this browser.</p><div class="backup-actions"><button type="button" id="exportData" class="primary">Export backup (JSON)</button><label class="button-like" for="importFile">Import backup (JSON)</label><input id="importFile" type="file" accept=".json,application/json" hidden></div><p id="backupStatus" class="muted" role="status"></p></section>
         <div class="month-toolbar"><label for="month">Month</label><input id="month" type="month"></div>
         <div class="cards">
           <div class="card"><div class="muted">Monthly Income</div><h2 id="monthlyIncome">Rp 0</h2></div>
@@ -76,6 +77,6 @@
       </div>
     </main>
   </div>
-  <script src="js/app.js?v=20260924-3"></script>
+  <script src="js/app.js?v=20260924-4"></script>
 </body>
 </html>
