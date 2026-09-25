@@ -114,7 +114,7 @@ $('importFile').onchange=async e=>{
   }catch(err){$('backupStatus').textContent=err.message||'Could not read this backup file.'}
   e.target.value='';
 };
-\n$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
+$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
 renderIncome();renderExpenses();renderStock();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
