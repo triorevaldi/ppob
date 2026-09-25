@@ -44,7 +44,7 @@
           <div class="wide"><label>Item name</label><input id="item" required></div>
           <div><label>Qty</label><input id="qty" type="number" min="1" value="1" required></div>
           <div><label>Income amount (IDR)</label><input id="amount" type="number" min="0" required></div>
-          <div><label>Date</label><input id="date" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" required></div>
+          <div><label>Date</label><input id="date" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div>
           <div class="wide"><label>Note</label><input id="note"></div>
           <button class="primary">Add income</button>
         </form><div id="table"></div></section>
@@ -57,7 +57,7 @@
           <div class="wide"><label>Expense name</label><input id="expenseItem" required></div>
           <div><label>Qty</label><input id="expenseQty" type="number" min="1" value="1" required></div>
           <div><label>Expense amount (IDR)</label><input id="expenseAmount" type="number" min="0" required></div>
-          <div><label>Date</label><input id="expenseDate" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" required></div>
+          <div><label>Date</label><input id="expenseDate" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div>
           <div class="wide"><label>Note</label><input id="expenseNote"></div>
           <button class="primary">Add expense</button>
         </form><div id="expenseTable"></div></section>
@@ -67,7 +67,7 @@
       <div id="stock" hidden>
         <h1>Stock Manager</h1><p class="muted">Record workshop stock, cost, and quantity.</p>
         <section><form id="stockForm" class="stock-form">
-          <div><label>Date</label><input id="stockDate" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" required></div>
+          <div><label>Date</label><input id="stockDate" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div>
           <div class="wide"><label>Item name</label><input id="stockItem" required></div>
           <div><label>Qty</label><input id="stockQty" type="number" min="1" value="1" required></div>
           <div><label>Cost (IDR)</label><input id="stockAmount" type="number" min="0" required></div>
