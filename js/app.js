@@ -48,7 +48,7 @@ function renderStock(){
     return {r,qty,stock,cost,stockPct,costPerUnit};
   }).sort((a,b)=>a.stockPct-b.stockPct).map(({r,qty,stock,cost,stockPct,costPerUnit})=>{
     let lowStock=stockPct<10?' low-stock':'';
-    return `<tr class="${lowStock.trim()}"><td>${dateDisplay(r.date)}</td><td>${esc(r.item)}</td><td>${qty}</td><td class="money">${fmt(cost)}</td><td>${stock.toLocaleString('id-ID')}</td><td>${stockPct.toLocaleString('id-ID',{maximumFractionDigits:2})}%</td><td class="money">${fmt(costPerUnit)}</td><td><button onclick="editStock('${r.id}')">Edit</button><button onclick="delStock('${r.id}')">Delete</button></td></tr>`
+    return `<tr class="${lowStock.trim()}"><td>${dateDisplay(r.date)}</td><td>${esc(r.item)}</td><td>${qty}</td><td class="money">${fmt(cost)}</td><td>${stock.toLocaleString('id-ID')}</td><td>${Math.floor(stockPct)}%</td><td class="money">${fmt(costPerUnit)}</td><td><button onclick="editStock('${r.id}')">Edit</button><button onclick="delStock('${r.id}')">Delete</button></td></tr>`
   }).join('');
   $('stockTable').innerHTML='<table><tr><th>Date</th><th>Item name</th><th>Qty</th><th class="money">Cost</th><th>Stock</th><th>Stock %</th><th class="money">Cost per unit</th><th>Action</th></tr>'+rows+'</table>'
 }
