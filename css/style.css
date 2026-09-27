@@ -337,4 +337,4 @@ th,td {
 .income-today.highlight{background:#ecfdf3}
 .expense-today.highlight{background:#fff1f2}
 
-.stockTable tr.low-stock{background:rgba(220,38,38,.2)}
+#stockTable tr.low-stock{background:rgba(220,38,38,.2)}
