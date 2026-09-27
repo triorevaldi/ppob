@@ -336,3 +336,5 @@ th,td {
 .table-toolbar{display:flex;justify-content:flex-end;margin-bottom:10px}
 .income-today.highlight{background:#ecfdf3}
 .expense-today.highlight{background:#fff1f2}
+
+.stockTable tr.low-stock{background:rgba(220,38,38,.2)}
