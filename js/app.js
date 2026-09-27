@@ -45,7 +45,10 @@ function renderStock(){
   let rows=stockData.map(r=>{
     let qty=Number(r.qty)||0,stock=Number(r.stock??r.currentStock??0),cost=Number(r.amount)||0;
     let stockPct=qty>0?(stock/qty*100):0,costPerUnit=qty>0?cost/qty:0;
-    return `<tr><td>${dateDisplay(r.date)}</td><td>${esc(r.item)}</td><td>${qty}</td><td class="money">${fmt(cost)}</td><td>${stock.toLocaleString('id-ID')}</td><td>${stockPct.toLocaleString('id-ID',{maximumFractionDigits:2})}%</td><td class="money">${fmt(costPerUnit)}</td><td><button onclick="editStock('${r.id}')">Edit</button><button onclick="delStock('${r.id}')">Delete</button></td></tr>`
+    return {r,qty,stock,cost,stockPct,costPerUnit};
+  }).sort((a,b)=>a.stockPct-b.stockPct).map(({r,qty,stock,cost,stockPct,costPerUnit})=>{
+    let lowStock=stockPct<10?' low-stock':'';
+    return `<tr class="${lowStock.trim()}"><td>${dateDisplay(r.date)}</td><td>${esc(r.item)}</td><td>${qty}</td><td class="money">${fmt(cost)}</td><td>${stock.toLocaleString('id-ID')}</td><td>${stockPct.toLocaleString('id-ID',{maximumFractionDigits:2})}%</td><td class="money">${fmt(costPerUnit)}</td><td><button onclick="editStock('${r.id}')">Edit</button><button onclick="delStock('${r.id}')">Delete</button></td></tr>`
   }).join('');
   $('stockTable').innerHTML='<table><tr><th>Date</th><th>Item name</th><th>Qty</th><th class="money">Cost</th><th>Stock</th><th>Stock %</th><th class="money">Cost per unit</th><th>Action</th></tr>'+rows+'</table>'
 }
