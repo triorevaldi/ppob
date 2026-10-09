@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded',()=>{
-const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1',STOCK_KEY='ppob.stock.v1';
-let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),incomeEditing=null,expenseEditing=null,stockEditing=null,incomeSortDesc=true,expenseSortDesc=true,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
-$('date').value=today();$('expenseDate').value=today();$('stockDate').value=today();$('month').value=monthKey();
+const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1',STOCK_KEY='ppob.stock.v1',SUBSCRIPTION_KEY='ppob.subscriptions.v1';
+let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriptionData=JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY)||'[]'),incomeEditing=null,expenseEditing=null,stockEditing=null,subscriptionEditing=null,incomeSortDesc=true,expenseSortDesc=true,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
+$('date').value=today();$('expenseDate').value=today();$('stockDate').value=today();$('subscriptionDate').value=today();$('month').value=monthKey();
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateValue(s){let iso=dateISO(s);return iso?new Date(iso+'T00:00:00').getTime():0}
@@ -40,6 +40,24 @@ $('expenseForm').onsubmit=e=>{e.preventDefault();let r={item:$('expenseItem').va
 window.editExpense=id=>{let r=expenseData.find(x=>x.id===id);expenseEditing=id;$('expenseItem').value=r.item;$('expenseQty').value=r.qty||1;$('expenseAmount').value=r.amount;$('expenseDate').value=dateInput(r.date);$('expenseNote').value=r.note;$('expenseForm').querySelector('button').textContent='Save changes'};
 window.delExpense=id=>{if(confirm('Delete this expense record?')){expenseData=expenseData.filter(x=>x.id!==id);localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));renderExpenses();renderDashboard()}};
 
+
+function renderSubscriptions(){
+  const rows=[...subscriptionData].sort((a,b)=>dateValue(b.date)-dateValue(a.date)).map(r=>{
+    const bill=Number(r.bill)||0,paid=Number(r.paid)||0,balance=bill-paid;
+    return `<tr><td>${dateDisplay(r.date)}</td><td>${esc(r.customer)}</td><td>${esc(r.type)}</td><td class="money">${fmt(bill)}</td><td class="money">${fmt(paid)}</td><td class="money">${fmt(balance)}</td><td>${esc(r.note)}</td><td><button onclick="editSubscription('${r.id}')">Edit</button><button onclick="delSubscription('${r.id}')">Delete</button></td></tr>`;
+  }).join('');
+  $('subscriptionTable').innerHTML=subscriptionData.length?'<table><tr><th>Date</th><th>Customer Name</th><th>Type</th><th class="money">Bill</th><th class="money">Paid</th><th class="money">Remaining</th><th>Note</th><th>Action</th></tr>'+rows+'</table>':'<p class="muted">No subscription bills yet.</p>';
+}
+$('subscriptionForm').onsubmit=e=>{
+  e.preventDefault();
+  const r={date:$('subscriptionDate').value,customer:$('subscriptionCustomer').value.trim(),type:$('subscriptionType').value,bill:+$('subscriptionBill').value,paid:+$('subscriptionPaid').value,note:$('subscriptionNote').value.trim()};
+  if(subscriptionEditing){const i=subscriptionData.findIndex(x=>x.id===subscriptionEditing);subscriptionData[i]={...subscriptionData[i],...r};subscriptionEditing=null;e.target.querySelector('button').textContent='Add bill'}
+  else subscriptionData.push({id:crypto.randomUUID(),...r});
+  localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));e.target.reset();$('subscriptionDate').value=today();$('subscriptionPaid').value=0;renderSubscriptions();
+};
+window.editSubscription=id=>{const r=subscriptionData.find(x=>x.id===id);if(!r)return;subscriptionEditing=id;$('subscriptionDate').value=dateInput(r.date);$('subscriptionCustomer').value=r.customer;$('subscriptionType').value=r.type;$('subscriptionBill').value=r.bill;$('subscriptionPaid').value=r.paid;$('subscriptionNote').value=r.note||'';$('subscriptionForm').querySelector('button').textContent='Save changes'};
+window.delSubscription=id=>{if(confirm('Delete this subscription bill?')){subscriptionData=subscriptionData.filter(x=>x.id!==id);localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));renderSubscriptions()}};
+
 function renderStock(){
   if(!stockData.length){$('stockTable').innerHTML='<p class="muted">No stock records yet.</p>';return}
   let rows=stockData.map(r=>{
@@ -63,6 +81,7 @@ $('stockForm').onsubmit=e=>{
     e.target.querySelector('button').textContent='Add stock'
   }else stockData.push({id:crypto.randomUUID(),...r});
   localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
+    localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));
   e.target.reset();
   $('stockDate').value=today();
   $('stockQty').value=1;
@@ -85,10 +104,10 @@ window.delStock=id=>{
     renderStock()
   }
 };
-function show(p){$('dashboard').hidden=p!=='dashboard';$('income').hidden=p!=='income';$('expenses').hidden=p!=='expenses';$('stock').hidden=p!=='stock';$('bd').classList.toggle('active',p==='dashboard');$('bi').classList.toggle('active',p==='income');$('be').classList.toggle('active',p==='expenses');$('bs').classList.toggle('active',p==='stock');if(p==='income')$('date').value=today();if(p==='expenses')$('expenseDate').value=today();if(p==='stock')$('stockDate').value=today();if(p==='dashboard')renderDashboard()}
+function show(p){$('dashboard').hidden=p!=='dashboard';$('income').hidden=p!=='income';$('expenses').hidden=p!=='expenses';$('subscriptions').hidden=p!=='subscriptions';$('stock').hidden=p!=='stock';$('bd').classList.toggle('active',p==='dashboard');$('bi').classList.toggle('active',p==='income');$('be').classList.toggle('active',p==='expenses');$('bsub').classList.toggle('active',p==='subscriptions');$('bs').classList.toggle('active',p==='stock');if(p==='income')$('date').value=today();if(p==='expenses')$('expenseDate').value=today();if(p==='stock')$('stockDate').value=today();if(p==='subscriptions')$('subscriptionDate').value=today();if(p==='dashboard')renderDashboard()}
 
 $('exportData').onclick=()=>{
-  const backup={app:'PPOB',formatVersion:1,exportedAt:new Date().toISOString(),income:incomeData,expenses:expenseData,stock:stockData};
+  const backup={app:'PPOB',formatVersion:1,exportedAt:new Date().toISOString(),income:incomeData,expenses:expenseData,stock:stockData,subscriptions:subscriptionData};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='ppob-backup-'+new Date().toISOString().slice(0,10)+'.json';
@@ -99,26 +118,27 @@ $('importFile').onchange=async e=>{
   const file=e.target.files[0];if(!file)return;
   try{
     const parsed=JSON.parse(await file.text());
-    if(!parsed||parsed.app!=='PPOB'||parsed.formatVersion!==1||!Array.isArray(parsed.income)||!Array.isArray(parsed.expenses)||!Array.isArray(parsed.stock))throw new Error('This file is not a supported PPOB backup.');
+    if(!parsed||parsed.app!=='PPOB'||parsed.formatVersion!==1||!Array.isArray(parsed.income)||!Array.isArray(parsed.expenses)||!Array.isArray(parsed.stock)||(parsed.subscriptions!==undefined&&!Array.isArray(parsed.subscriptions)))throw new Error('This file is not a supported PPOB backup.');
     if(!confirm('Import this backup and replace all current income, expense, and stock records? This cannot be undone.')){e.target.value='';return}
-    incomeData=parsed.income;expenseData=parsed.expenses;stockData=parsed.stock;
+    incomeData=parsed.income;expenseData=parsed.expenses;stockData=parsed.stock;subscriptionData=parsed.subscriptions||[];
     localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
     localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));
     localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
     incomeEditing=expenseEditing=stockEditing=null;
-    $('incomeForm').reset();$('expenseForm').reset();$('stockForm').reset();
+    $('incomeForm').reset();$('expenseForm').reset();$('stockForm').reset();$('subscriptionForm').reset();
     $('qty').value=$('expenseQty').value=$('stockQty').value=1;
-    $('date').value=$('expenseDate').value=$('stockDate').value=today();
+    $('date').value=$('expenseDate').value=$('stockDate').value=$('subscriptionDate').value=today();$('subscriptionPaid').value=0;
     $('incomeForm').querySelector('button').textContent='Add income';
     $('expenseForm').querySelector('button').textContent='Add expense';
     $('stockForm').querySelector('button').textContent='Add stock';
-    renderIncome();renderExpenses();renderStock();renderDashboard();
+    $('subscriptionForm').querySelector('button').textContent='Add bill';
+    renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();
     $('backupStatus').textContent='Backup imported successfully.';
   }catch(err){$('backupStatus').textContent=err.message||'Could not read this backup file.'}
   e.target.value='';
 };
-$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
+$('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bsub').onclick=()=>show('subscriptions');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
-renderIncome();renderExpenses();renderStock();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
+renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
 
