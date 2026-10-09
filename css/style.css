@@ -338,3 +338,7 @@ th,td {
 .expense-today.highlight{background:#fff1f2}
 
 #stockTable tr.low-stock{background:rgba(220,38,38,.2)}
+
+.subscription-form{grid-template-columns:1fr 1.5fr 1fr 1fr 1fr;}
+.subscription-form .wide{grid-column:span 2;}
+@media(max-width:800px){.subscription-form{grid-template-columns:1fr 1fr}.subscription-form .wide{grid-column:1/-1}}
