@@ -341,4 +341,13 @@ th,td {
 
 .subscription-form{grid-template-columns:1fr 1.5fr 1fr 1fr 1fr;}
 .subscription-form .wide{grid-column:span 2;}
+
+#subscriptionType {
+    display: block;
+    width: 100%;
+    padding: 8px 15px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    margin-top: 2px;
+}
 @media(max-width:800px){.subscription-form{grid-template-columns:1fr 1fr}.subscription-form .wide{grid-column:1/-1}}
