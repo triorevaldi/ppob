@@ -268,6 +268,6 @@ $('importFile').onchange=async e=>{
 };
 $('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bsub').onclick=()=>show('subscriptions');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
-updateItemControls();updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
+updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
 
