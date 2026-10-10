@@ -42,13 +42,26 @@
       <div id="income" hidden>
         <h1>Income Manager</h1><p class="muted">Record and manage workshop income.</p>
         <section><div class="table-toolbar"><button type="button" id="incomeSort">Sort: Latest first</button></div><form id="incomeForm">
-          <div class="wide"><label>Item name</label><input id="item" required></div>
+          <div class="wide"><label for="item">Product / service</label><select id="item" required><option value="Print">Print</option><option value="Photo print">Photo print</option><option value="Jilid">Jilid</option><option value="Laminating">Laminating</option><option value="Print &amp; Laminating">Print &amp; Laminating</option><option value="__other__">Other (no stock deduction unless a recipe exists)</option></select></div>
+          <div id="customItemWrap" class="wide" hidden><label for="customItem">Other product / service name</label><input id="customItem" placeholder="e.g. Design Phamplet"></div>
+          <div id="photoUsageWrap" hidden><label for="photoSheetsPerUnit">Photo paper per unit (A4 sheet)</label><input id="photoSheetsPerUnit" type="number" min="0.01" step="0.01" value="0.5"></div>
           <div><label>Qty</label><input id="qty" type="number" min="1" value="1" required></div>
           <div><label>Income amount (IDR)</label><input id="amount" type="number" min="0" required></div>
           <div><label>Date</label><input id="date" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div>
           <div class="wide"><label>Note</label><input id="note"></div>
           <button class="primary">Add income</button>
-        </form><div id="table"></div></section>
+        </form><div id="table"></div>
+          <details class="recipe-manager"><summary>Product recipes (optional stock deduction)</summary>
+            <p class="muted">Add one material per recipe row. To define a product that uses multiple materials, add one row for each material. New sales deduct stock only for products with a recipe; historical sales are not deducted retroactively.</p>
+            <form id="recipeForm" class="recipe-form">
+              <div><label for="recipeProduct">Product / service</label><input id="recipeProduct" required placeholder="e.g. Custom binding"></div>
+              <div><label for="recipeStockItem">Stock item</label><select id="recipeStockItem" required></select></div>
+              <div><label for="recipeQtyPerUnit">Consumption per sale unit</label><input id="recipeQtyPerUnit" type="number" min="0.01" step="0.01" value="1" required></div>
+              <button class="primary">Add recipe row</button>
+            </form>
+            <div id="recipeTable"></div>
+          </details>
+        </section>
         <div class="sticky-summary" id="incomeSummary"></div>
       </div>
 
@@ -91,6 +104,6 @@
       </div>
     </main>
   </div>
-  <script src="js/app.js?v=20261009-1"></script>
+  <script src="js/app.js?v=20261010-2"></script>
 </body>
 </html>
