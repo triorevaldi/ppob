@@ -351,3 +351,9 @@ th,td {
     margin-top: 2px;
 }
 @media(max-width:800px){.subscription-form{grid-template-columns:1fr 1fr}.subscription-form .wide{grid-column:1/-1}}
+
+.recipe-manager{margin-top:20px;border-top:1px solid var(--border);padding-top:14px}
+.recipe-manager summary{cursor:pointer;font-weight:600}
+.recipe-form{grid-template-columns:2fr 2fr 1fr auto;margin-top:14px}
+#incomeForm select,#recipeForm select{width:100%;padding:9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff}
+@media(max-width:800px){.recipe-form{grid-template-columns:1fr 1fr}.recipe-form button{grid-column:1/-1}}
