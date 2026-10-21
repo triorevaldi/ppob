@@ -72,7 +72,7 @@ function deductForSale(sale){
   return movements;
 }
 function persistStock(){localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));renderStock()}
-function allServiceNames(){return [...new Set([...Object.keys(BUILTIN_RECIPES).map(n=>({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[n]||n)),...customRecipes.map(r=>r.product).filter(Boolean),'Design Phamplet'])]}
+function allServiceNames(){return [...new Set([...Object.keys(BUILTIN_RECIPES).filter(n=>norm(n)!=='print & laminating').map(n=>({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating'}[n]||n)),...customRecipes.map(r=>r.product).filter(Boolean)])].filter(n=>norm(n)!=='print & laminating'&&norm(n)!=='other service…')}
 function updateItemControls(){
   if(!$('item'))return;
   const item=$('item').value||'Print';
@@ -84,10 +84,10 @@ function updateItemControls(){
 function selectedSaleItem(){return $('item').value==='__other__' ? $('customItem').value.trim() : $('item').value}
 function renderServiceOptions(){
  const host=$('serviceOptions');if(!host)return;
- const builtins=['Print','Photo print','Jilid','Laminating','Print & Laminating'].map(norm);
+ const builtins=['Print','Photo print','Jilid','Laminating'].map(norm);
  const customNames=[...new Set(customRecipes.map(r=>r.product).filter(Boolean))];
  host.innerHTML=allServiceNames().map(name=>'<div class="service-option'+(norm(name)===norm($('item').value)?' selected':'')+'"><button type="button" class="service-name" data-service="'+esc(name)+'">'+esc(name)+'</button><button type="button" class="service-manage" data-manage="'+esc(name)+'" aria-label="Edit '+esc(name)+'" title="Edit service">✎</button>'+(builtins.includes(norm(name))?'':'<button type="button" class="service-delete" data-delete="'+esc(name)+'" aria-label="Delete '+esc(name)+'" title="Delete service">×</button>')+'</div>').join('')+
- '<div class="service-option"><button type="button" class="service-name" data-service="__other__">Other service…</button><span></span><span></span></div>';
+
  host.querySelectorAll('[data-service]').forEach(b=>b.onclick=()=>{const name=b.dataset.service;$('item').value=name;$('selectedServiceLabel').textContent=name==='__other__'?'Other service…':name;$('customItemWrap').hidden=name!=='__other__';$('photoUsageWrap').hidden=norm(name)!=='photo print';$('servicePicker').hidden=true;if(name==='__other__')$('customItem').focus()});
  host.querySelectorAll('[data-manage]').forEach(b=>b.onclick=()=>{ $('servicePicker').hidden=true;openServiceEditor(b.dataset.manage) });
  host.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{const name=b.dataset.delete;if(!confirm('Delete service/product "'+name+'" and its recipe? Existing sales records and stock movements will remain unchanged.'))return;customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(name));localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));if(norm($('item').value)===norm(name)){$('item').value='Print'}updateItemControls()});
