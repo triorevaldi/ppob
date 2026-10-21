@@ -357,3 +357,26 @@ th,td {
 .recipe-form{grid-template-columns:2fr 2fr 1fr auto;margin-top:14px}
 #incomeForm select,#recipeForm select{width:100%;padding:9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff}
 @media(max-width:800px){.recipe-form{grid-template-columns:1fr 1fr}.recipe-form button{grid-column:1/-1}}
+
+/* Product/service picker and sticky recipe actions */
+#income{padding-bottom:84px}
+.service-picker-wrap{position:relative}
+.service-picker-button{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:#fff;border:1px solid #c8c8c8;border-radius:0;padding:12px 14px;font-size:16px;color:#344054}
+.service-picker{position:absolute;top:100%;left:0;right:0;z-index:20;background:#fff;border:1px solid #c8c8c8;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:300px;overflow:auto}
+.service-option{display:grid;grid-template-columns:minmax(0,1fr) 42px;border-bottom:1px solid #d0d0d0;min-height:40px}
+.service-name,.service-manage{border:0;border-radius:0;background:#fff;text-align:left;padding:10px 14px;color:#344054}
+.service-manage{text-align:center;border-left:1px solid #d0d0d0;padding:8px}
+.service-name:hover,.service-manage:hover{background:#f2f4f7}
+.service-option.selected .service-name{font-weight:650;background:#eff6ff}
+.sticky-recipe-bar{position:fixed;left:var(--sidebar-width);right:0;bottom:0;z-index:9;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 32px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 14px rgba(16,24,40,.08);margin:0;border-radius:0;transition:left .2s ease}
+.sidebar.collapsed~.app-shell .sticky-recipe-bar{left:var(--sidebar-collapsed)}
+.service-dialog{width:min(600px,calc(100% - 28px));max-height:85vh;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.service-dialog::backdrop{background:rgba(16,24,40,.45)}
+.service-dialog-form{display:flex;flex-direction:column;gap:16px;padding:22px}
+.dialog-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.dialog-heading h2{margin:0 0 5px;font-size:20px}
+.recipe-editor-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 42px;gap:8px;margin:8px 0}
+.recipe-editor-row select{width:100%;padding:9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff}
+.dialog-actions{display:flex;align-items:center;gap:10px;margin-top:8px}.dialog-actions span{flex:1}
+.danger{color:#b42318;border-color:#fda29b}
+@media(max-width:800px){.sticky-recipe-bar{left:var(--sidebar-collapsed);padding:10px 14px}.recipe-editor-row{grid-template-columns:minmax(0,1fr) 90px 38px}}
