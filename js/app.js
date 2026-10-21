@@ -40,7 +40,7 @@ function findStockItem(name){return stockData.find(x=>norm(x.item)===norm(name))
 function getSaleRecipe(sale){
   const key=norm(sale.item);
   if(BUILTIN_RECIPES[key])return BUILTIN_RECIPES[key](sale);
-  return customRecipes.filter(r=>norm(r.product)===key).map(r=>({stockItem:r.stockItem,qty:Number(r.qtyPerUnit)}));
+  return customRecipes.filter(r=>norm(r.product)===key&&r.stockItem&&Number(r.qtyPerUnit)>0).map(r=>({stockItem:r.stockItem,qty:Number(r.qtyPerUnit)}));
 }
 function restoreSaleStock(sale){
   if(!Array.isArray(sale.stockDeductions))return;
@@ -113,10 +113,10 @@ function openServiceEditor(name){
  $('recipeRows').innerHTML='';
  if(serviceEditing){customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).forEach(r=>addRecipeEditorRow(r))}
  else if(!builtin&&stockData.length)addRecipeEditorRow({stockItem:stockData[0].item,qtyPerUnit:1});
- if(builtin){$('recipeRows').innerHTML='<p class="muted">This built-in service uses its predefined stock recipe and cannot be edited here.</p>';$('recipeProduct').value=name}
+ if(builtin){$('recipeRows').innerHTML='<p class="muted">This built-in service uses its predefined stock recipe and cannot be edited here.</p>';$('recipeProduct').value=name;$('recipeForm').querySelector('[type=submit]').disabled=true;$('addRecipeRow').disabled=true}else{$('recipeForm').querySelector('[type=submit]').disabled=false;$('addRecipeRow').disabled=false}
  $('serviceDialog').showModal();
 }
-function closeServiceEditor(){ $('serviceDialog').close();serviceEditing=null;$('recipeProduct').readOnly=false }
+function closeServiceEditor(){ $('serviceDialog').close();serviceEditing=null;$('recipeProduct').readOnly=false;$('recipeForm').querySelector('[type=submit]').disabled=false;$('addRecipeRow').disabled=false }
 
 function renderIncome(){let total=incomeData.reduce((a,r)=>a+Number(r.amount),0);$('incomeSummary').innerHTML='<span><span class="summary-label">Total income</span> <strong>'+fmt(total)+'</strong></span><span><span class="summary-label">Transactions</span> <strong>'+incomeData.length+'</strong></span>';if(!incomeData.length){$('table').innerHTML='<p class="muted">No income records yet.</p>';return}let todayDate=today(),rows=sortedRecords(incomeData,incomeSortDesc);$('incomeSort').textContent='Sort: '+(incomeSortDesc?'Latest first':'Oldest first');$('table').innerHTML='<table><tr><th>Date</th><th>Item name</th><th>Qty</th><th class="money">Income amount</th><th>Note</th><th style="width: 140px">Action</th></tr>'+rows.map(r=>'<tr class="income-today'+(dateISO(r.date)===dateISO(todayDate)?' highlight':'')+'"><td>'+dateDisplay(r.date)+'</td><td>'+esc(r.item)+'</td><td>'+r.qty+'</td><td class="money">'+fmt(r.amount)+'</td><td>'+esc(r.note)+'</td><td style="width: 140px"><button onclick="editIncome(\''+r.id+'\')">Edit</button><button onclick="delIncome(\''+r.id+'\')">Delete</button></td></tr>').join('')+'</table>'}
 function renderExpenses(){let total=expenseData.reduce((a,r)=>a+Number(r.amount),0);$('expenseSummary').innerHTML='<span><span class="summary-label">Total expenses</span> <strong>'+fmt(total)+'</strong></span><span><span class="summary-label">Transactions</span> <strong>'+expenseData.length+'</strong></span>';if(!expenseData.length){$('expenseTable').innerHTML='<p class="muted">No expense records yet.</p>';return}let todayDate=today(),rows=sortedRecords(expenseData,expenseSortDesc);$('expenseSort').textContent='Sort: '+(expenseSortDesc?'Latest first':'Oldest first');$('expenseTable').innerHTML='<table><tr><th>Date</th><th>Expense name</th><th>Qty</th><th class="money">Expense amount</th><th>Note</th><th style="width: 140px">Action</th></tr>'+rows.map(r=>'<tr class="expense-today'+(dateISO(r.date)===todayDate?' highlight':'')+'"><td>'+dateDisplay(r.date)+'</td><td>'+esc(r.item)+'</td><td>'+ (r.qty || 1) +'</td><td class="money">'+fmt(r.amount)+'</td><td>'+esc(r.note)+'</td><td><button onclick="editExpense(\''+r.id+'\')">Edit</button><button onclick="delExpense(\''+r.id+'\')">Delete</button></td></tr>').join('')+'</table>'}
@@ -157,7 +157,7 @@ window.editIncome=id=>{
   incomeEditing=id;
   const standard=['Print','Photo print','Jilid','Laminating','Print & Laminating'];
   const known=standard.find(n=>norm(n)===norm(r.item))||customRecipes.find(n=>norm(n.product)===norm(r.item))?.product;
-  $('item').value=known||'__other__';
+  $('item').value=known||'__other__';$('selectedServiceLabel').textContent=known||'Other service…';
   $('customItem').value=known?'':r.item;
   $('customItemWrap').hidden=!!known;
   $('photoUsageWrap').hidden=norm(r.item)!=='photo print';
@@ -183,9 +183,9 @@ $('recipeForm').onsubmit=e=>{
  if(!product){alert('Enter a service/product name.');return}
  if(Object.keys(BUILTIN_RECIPES).some(k=>norm(({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[k]||k))===norm(product))){alert('Built-in service recipes cannot be changed here.');return}
  const rows=[...$('recipeRows').querySelectorAll('.recipe-editor-row')].map(row=>({stockItem:row.querySelector('select').value,qtyPerUnit:Number(row.querySelector('input').value)}));
- if(rows.some(r=>!r.stockItem||!Number.isFinite(r.qtyPerUnit)||r.qtyPerUnit<=0)){alert('Check each stock item and its consumption amount.');return}
+ if(rows.some(r=>!r.stockItem||!Number.isFinite(r.qtyPerUnit)||r.qtyPerUnit<=0)){alert('Check each stock item and its consumption amount, or remove all material rows for an income-only service.');return}
  if(serviceEditing)customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(serviceEditing));
- customRecipes.push(...rows.map(r=>({id:crypto.randomUUID(),product,stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})));
+ customRecipes.push(...(rows.length?rows.map(r=>({id:crypto.randomUUID(),product,stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})): [{id:crypto.randomUUID(),product,stockItem:'',qtyPerUnit:0}]));
  localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));closeServiceEditor();updateItemControls();
 };
 $('deleteServiceButton').onclick=()=>{
