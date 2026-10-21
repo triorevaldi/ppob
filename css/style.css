@@ -394,3 +394,11 @@ th,td {
 .service-delete{border:0;border-left:1px solid #d0d0d0;border-radius:0;background:#fff;color:#b42318;font-size:19px;line-height:1;padding:7px}
 .service-delete:hover{background:#fff1f2}
 @media(max-width:800px){.income-sticky-summary{padding:9px 12px;gap:10px}.income-sticky-summary strong{font-size:13px}.transaction-filters{width:100%}.table-toolbar.income-toolbar{align-items:flex-start}.transaction-filters #incomeMonthFilter{min-width:130px}}
+
+/* Keep the service editor dialog and form centered and full-width */
+.service-dialog[open]{position:fixed;inset:0;margin:auto}
+.service-dialog-form{width:100%;box-sizing:border-box;align-items:stretch}
+.service-dialog-form>div:not(.dialog-heading):not(.dialog-actions),.service-dialog-form>input,.service-dialog-form>label{width:100%;box-sizing:border-box}
+#recipeRows{width:100%;min-width:0}
+.recipe-editor-row{width:100%;box-sizing:border-box}
+.recipe-editor-row select,.recipe-editor-row input{min-width:0;box-sizing:border-box}
