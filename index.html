@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PPOB</title>
-  <link rel="stylesheet" href="css/style.css?v=1.2.0">
+  <link rel="stylesheet" href="css/style.css?v=1.2.1">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -41,7 +41,7 @@
 
       <div id="income" hidden>
         <h1>Income Manager</h1><p class="muted">Record and manage workshop income.</p>
-        <section><div class="table-toolbar"><button type="button" id="incomeSort">Sort: Latest first</button></div><form id="incomeForm">
+        <section><div class="table-toolbar income-toolbar"><div class="transaction-filters"><label for="incomeYearFilter">Year</label><select id="incomeYearFilter"></select><label for="incomeMonthFilter">Months</label><select id="incomeMonthFilter" multiple size="1" title="Select one or more months"></select><button type="button" id="clearIncomeFilter">All months</button></div><button type="button" id="incomeSort">Sort: Latest first</button></div><form id="incomeForm">
           <div class="wide service-picker-wrap"><label for="servicePickerButton">Product / service</label><button type="button" id="servicePickerButton" class="service-picker-button"><span id="selectedServiceLabel">Print</span><span aria-hidden="true">▾</span></button><div id="servicePicker" class="service-picker" hidden><div id="serviceOptions"></div></div><input id="item" type="hidden" value="Print" required></div>
           <div id="customItemWrap" class="wide" hidden><label for="customItem">Other product / service name</label><input id="customItem" placeholder="e.g. Design Phamplet"></div>
           <div id="photoUsageWrap" hidden><label for="photoSheetsPerUnit">Photo paper per unit (A4 sheet)</label><input id="photoSheetsPerUnit" type="number" min="0.01" step="0.01" value="0.5"></div>
@@ -51,7 +51,7 @@
           <div class="wide"><label>Note</label><input id="note"></div>
           <button class="primary">Add income</button>
         </form><div id="table"></div>
-          <div id="recipeManager" class="recipe-manager sticky-recipe-bar"><span>Manage your service and product list</span><button type="button" id="addServiceButton" class="primary">＋ Add service/product</button></div>
+          
           <dialog id="serviceDialog" class="service-dialog"><form id="recipeForm" class="service-dialog-form">
             <div class="dialog-heading"><div><h2 id="serviceDialogTitle">Add service/product</h2><p class="muted">Add a service with no stock usage, or define the materials it consumes.</p></div><button type="button" id="closeServiceDialog" aria-label="Close">✕</button></div>
             <div><label for="recipeProduct">Service/product name</label><input id="recipeProduct" required placeholder="e.g. Design Phamplet"></div>
@@ -60,7 +60,7 @@
             <div class="dialog-actions"><button type="button" id="deleteServiceButton" class="danger" hidden>Delete service</button><span></span><button type="submit" class="primary">Save service</button></div>
           </form></dialog>
         </section>
-        <div class="sticky-summary" id="incomeSummary"></div>
+        <div class="sticky-summary income-sticky-summary" id="incomeSummary"><button type="button" id="addServiceButton" class="primary">＋ Add service/product</button></div>
       </div>
 
       <div id="expenses" hidden>
@@ -102,6 +102,6 @@
       </div>
     </main>
   </div>
-  <script src="js/app.js?v=20261021-1"></script>
+  <script src="js/app.js?v=20261021-2"></script>
 </body>
 </html>
