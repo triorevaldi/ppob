@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded',()=>{
 const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1',STOCK_KEY='ppob.stock.v1',SUBSCRIPTION_KEY='ppob.subscriptions.v1',RECIPE_KEY='ppob.recipes.v1';
-let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriptionData=JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY)||'[]'),customRecipes=JSON.parse(localStorage.getItem(RECIPE_KEY)||'[]'),incomeEditing=null,expenseEditing=null,stockEditing=null,subscriptionEditing=null,incomeSortDesc=true,expenseSortDesc=true,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
+let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriptionData=JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY)||'[]'),customRecipes=JSON.parse(localStorage.getItem(RECIPE_KEY)||'[]'),incomeEditing=null,expenseEditing=null,stockEditing=null,subscriptionEditing=null,incomeSortDesc=true,expenseSortDesc=true,serviceEditing=null,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
 $('date').value=today();$('expenseDate').value=today();$('stockDate').value=today();$('subscriptionDate').value=today();$('month').value=monthKey();
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -72,25 +72,51 @@ function deductForSale(sale){
   return movements;
 }
 function persistStock(){localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));renderStock()}
+function allServiceNames(){return [...new Set([...Object.keys(BUILTIN_RECIPES).map(n=>({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[n]||n)),...customRecipes.map(r=>r.product).filter(Boolean),'Design Phamplet'])]}
 function updateItemControls(){
-  const sel=$('item'),old=sel.value,customNames=[...new Set(customRecipes.map(r=>r.product).filter(Boolean))];
-  const base=[['Print','Print'],['Photo print','Photo print'],['Jilid','Jilid'],['Laminating','Laminating'],['Print & Laminating','Print & Laminating']];
-  sel.innerHTML=base.map(([v,t])=>'<option value="'+esc(v)+'">'+esc(t)+'</option>').join('')+customNames.filter(n=>!base.some(x=>norm(x[0])===norm(n))).map(n=>'<option value="'+esc(n)+'">'+esc(n)+' (custom recipe)</option>').join('')+'<option value="__other__">Other (no stock deduction unless a recipe exists)</option>';
-  if([...sel.options].some(o=>o.value===old))sel.value=old;
-  $('customItemWrap').hidden=sel.value!=='__other__';
-  $('photoUsageWrap').hidden=norm(sel.value)!=='photo print';
-  renderRecipeManager();
+  if(!$('item'))return;
+  const item=$('item').value||'Print';
+  $('selectedServiceLabel').textContent=item;
+  $('customItemWrap').hidden=item!=='__other__';
+  $('photoUsageWrap').hidden=norm(item)!=='photo print';
+  renderServiceOptions();
+}
+function selectedSaleItem(){return $('item').value==='__other__' ? $('customItem').value.trim() : $('item').value}
+function renderServiceOptions(){
+ const host=$('serviceOptions');if(!host)return;
+ host.innerHTML=allServiceNames().map(name=>'<div class="service-option'+(norm(name)===norm($('item').value)?' selected':'')+'"><button type="button" class="service-name" data-service="'+esc(name)+'">'+esc(name)+'</button><button type="button" class="service-manage" data-manage="'+esc(name)+'" aria-label="Manage '+esc(name)+'" title="Manage service">✎</button></div>').join('')+
+ '<div class="service-option"><button type="button" class="service-name" data-service="__other__">Other service…</button><span></span></div>';
+ host.querySelectorAll('[data-service]').forEach(b=>b.onclick=()=>{const name=b.dataset.service;$('item').value=name;$('selectedServiceLabel').textContent=name==='__other__'?'Other service…':name;$('customItemWrap').hidden=name!=='__other__';$('photoUsageWrap').hidden=norm(name)!=='photo print';$('servicePicker').hidden=true;if(name==='__other__')$('customItem').focus()});
+ host.querySelectorAll('[data-manage]').forEach(b=>b.onclick=()=>{ $('servicePicker').hidden=true;openServiceEditor(b.dataset.manage) });
 }
 function selectedSaleItem(){return $('item').value==='__other__' ? $('customItem').value.trim() : $('item').value}
 function renderRecipeManager(){
-  const stockSelect=$('recipeStockItem');
-  if(!stockSelect)return;
-  const selected=stockSelect.value;
-  stockSelect.innerHTML=stockData.map(s=>'<option value="'+esc(s.item)+'">'+esc(s.item)+'</option>').join('');
-  if([...stockSelect.options].some(o=>o.value===selected))stockSelect.value=selected;
-  const body=$('recipeTable');
-  body.innerHTML=customRecipes.length?'<table><tr><th>Product/service</th><th>Stock item</th><th>Consumption per sale unit</th><th>Action</th></tr>'+customRecipes.map(r=>'<tr><td>'+esc(r.product)+'</td><td>'+esc(r.stockItem)+'</td><td>'+Number(r.qtyPerUnit)+'</td><td><button type="button" onclick="deleteRecipe(\''+r.id+'\')">Delete</button></td></tr>').join('')+'</table>':'<p class="muted">No custom recipes yet. Items without a recipe only record income.</p>';
+ const host=$('recipeRows');if(!host)return;
+ const rows=serviceEditing?customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).map(r=>({stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})): [];
+ host.innerHTML='';
+ if(!stockData.length){host.innerHTML='<p class="muted">Add stock items in Stock Manager before assigning materials.</p>';return}
+ (rows.length?rows:[{stockItem:stockData[0].item,qtyPerUnit:1}]).forEach(row=>addRecipeEditorRow(row));
 }
+function addRecipeEditorRow(row={}){
+ const host=$('recipeRows');const div=document.createElement('div');div.className='recipe-editor-row';
+ const options=stockData.map(s=>'<option value="'+esc(s.item)+'"'+(s.item===row.stockItem?' selected':'')+'>'+esc(s.item)+'</option>').join('');
+ div.innerHTML='<select aria-label="Stock item">'+options+'</select><input type="number" min="0.01" step="0.01" value="'+Number(row.qtyPerUnit||1)+'" aria-label="Consumption per sale unit"><button type="button" class="remove-recipe-row" aria-label="Remove material">✕</button>';
+ div.querySelector('button').onclick=()=>div.remove();host.appendChild(div);
+}
+function openServiceEditor(name){
+ serviceEditing=customRecipes.some(r=>norm(r.product)===norm(name))?name:null;
+ const builtin=Object.keys(BUILTIN_RECIPES).some(k=>norm(({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[k]||k))===norm(name));
+ $('serviceDialogTitle').textContent=serviceEditing?'Edit service/product':'Add service/product';
+ $('recipeProduct').value=serviceEditing|| (builtin?'':name);
+ $('recipeProduct').readOnly=builtin;
+ $('deleteServiceButton').hidden=!serviceEditing;
+ $('recipeRows').innerHTML='';
+ if(serviceEditing){customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).forEach(r=>addRecipeEditorRow(r))}
+ else if(!builtin&&stockData.length)addRecipeEditorRow({stockItem:stockData[0].item,qtyPerUnit:1});
+ if(builtin){$('recipeRows').innerHTML='<p class="muted">This built-in service uses its predefined stock recipe and cannot be edited here.</p>';$('recipeProduct').value=name}
+ $('serviceDialog').showModal();
+}
+function closeServiceEditor(){ $('serviceDialog').close();serviceEditing=null;$('recipeProduct').readOnly=false }
 
 function renderIncome(){let total=incomeData.reduce((a,r)=>a+Number(r.amount),0);$('incomeSummary').innerHTML='<span><span class="summary-label">Total income</span> <strong>'+fmt(total)+'</strong></span><span><span class="summary-label">Transactions</span> <strong>'+incomeData.length+'</strong></span>';if(!incomeData.length){$('table').innerHTML='<p class="muted">No income records yet.</p>';return}let todayDate=today(),rows=sortedRecords(incomeData,incomeSortDesc);$('incomeSort').textContent='Sort: '+(incomeSortDesc?'Latest first':'Oldest first');$('table').innerHTML='<table><tr><th>Date</th><th>Item name</th><th>Qty</th><th class="money">Income amount</th><th>Note</th><th style="width: 140px">Action</th></tr>'+rows.map(r=>'<tr class="income-today'+(dateISO(r.date)===dateISO(todayDate)?' highlight':'')+'"><td>'+dateDisplay(r.date)+'</td><td>'+esc(r.item)+'</td><td>'+r.qty+'</td><td class="money">'+fmt(r.amount)+'</td><td>'+esc(r.note)+'</td><td style="width: 140px"><button onclick="editIncome(\''+r.id+'\')">Edit</button><button onclick="delIncome(\''+r.id+'\')">Delete</button></td></tr>').join('')+'</table>'}
 function renderExpenses(){let total=expenseData.reduce((a,r)=>a+Number(r.amount),0);$('expenseSummary').innerHTML='<span><span class="summary-label">Total expenses</span> <strong>'+fmt(total)+'</strong></span><span><span class="summary-label">Transactions</span> <strong>'+expenseData.length+'</strong></span>';if(!expenseData.length){$('expenseTable').innerHTML='<p class="muted">No expense records yet.</p>';return}let todayDate=today(),rows=sortedRecords(expenseData,expenseSortDesc);$('expenseSort').textContent='Sort: '+(expenseSortDesc?'Latest first':'Oldest first');$('expenseTable').innerHTML='<table><tr><th>Date</th><th>Expense name</th><th>Qty</th><th class="money">Expense amount</th><th>Note</th><th style="width: 140px">Action</th></tr>'+rows.map(r=>'<tr class="expense-today'+(dateISO(r.date)===todayDate?' highlight':'')+'"><td>'+dateDisplay(r.date)+'</td><td>'+esc(r.item)+'</td><td>'+ (r.qty || 1) +'</td><td class="money">'+fmt(r.amount)+'</td><td>'+esc(r.note)+'</td><td><button onclick="editExpense(\''+r.id+'\')">Edit</button><button onclick="delExpense(\''+r.id+'\')">Delete</button></td></tr>').join('')+'</table>'}
@@ -147,7 +173,25 @@ window.delIncome=id=>{
     renderIncome();renderDashboard();renderStock();
   }
 };
-$('item').onchange=()=>{if($('item').value==='__other__'){$('customItemWrap').hidden=false;$('customItem').focus()}else{$('customItemWrap').hidden=true;$('customItem').value=''}$('photoUsageWrap').hidden=norm($('item').value)!=='photo print'};
+$('servicePickerButton').onclick=()=>{$('servicePicker').hidden=!$('servicePicker').hidden};
+document.addEventListener('click',e=>{if(!e.target.closest('.service-picker-wrap'))$('servicePicker').hidden=true});
+$('addServiceButton').onclick=()=>openServiceEditor('');
+$('closeServiceDialog').onclick=closeServiceEditor;
+$('addRecipeRow').onclick=()=>addRecipeEditorRow({stockItem:stockData[0]?.item||'',qtyPerUnit:1});
+$('recipeForm').onsubmit=e=>{
+ e.preventDefault();const product=$('recipeProduct').value.trim();
+ if(!product){alert('Enter a service/product name.');return}
+ if(Object.keys(BUILTIN_RECIPES).some(k=>norm(({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[k]||k))===norm(product))){alert('Built-in service recipes cannot be changed here.');return}
+ const rows=[...$('recipeRows').querySelectorAll('.recipe-editor-row')].map(row=>({stockItem:row.querySelector('select').value,qtyPerUnit:Number(row.querySelector('input').value)}));
+ if(rows.some(r=>!r.stockItem||!Number.isFinite(r.qtyPerUnit)||r.qtyPerUnit<=0)){alert('Check each stock item and its consumption amount.');return}
+ if(serviceEditing)customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(serviceEditing));
+ customRecipes.push(...rows.map(r=>({id:crypto.randomUUID(),product,stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})));
+ localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));closeServiceEditor();updateItemControls();
+};
+$('deleteServiceButton').onclick=()=>{
+ if(!serviceEditing||!confirm('Delete this service and all its recipe rows? Existing sale deductions will not change.'))return;
+ customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(serviceEditing));localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));closeServiceEditor();updateItemControls();
+};
 $('recipeForm').onsubmit=e=>{
   e.preventDefault();
   const product=$('recipeProduct').value.trim(),stockItem=$('recipeStockItem').value,qtyPerUnit=Number($('recipeQtyPerUnit').value);
