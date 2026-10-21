@@ -95,7 +95,7 @@ function renderRecipeManager(){
  const rows=serviceEditing?customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).map(r=>({stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})): [];
  host.innerHTML='';
  if(!stockData.length){host.innerHTML='<p class="muted">Add stock items in Stock Manager before assigning materials.</p>';return}
- (rows.length?rows:[{stockItem:stockData[0].item,qtyPerUnit:1}]).forEach(row=>addRecipeEditorRow(row));
+ (serviceEditing?rows:(rows.length?rows:[{stockItem:stockData[0].item,qtyPerUnit:1}])).forEach(row=>addRecipeEditorRow(row));
 }
 function addRecipeEditorRow(row={}){
  const host=$('recipeRows');const div=document.createElement('div');div.className='recipe-editor-row';
