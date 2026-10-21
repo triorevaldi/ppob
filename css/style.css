@@ -361,9 +361,9 @@ th,td {
 /* Product/service picker and sticky recipe actions */
 #income{padding-bottom:84px}
 .service-picker-wrap{position:relative}
-.service-picker-button{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:#fff;border:1px solid #c8c8c8;border-radius:0;padding:12px 14px;font-size:16px;color:#344054}
+.service-picker-button{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:#fff;border:1px solid #c8c8c8;border-radius:5px;padding:8px 15px;font-size:13px;color:#344054}
 .service-picker{position:absolute;top:100%;left:0;right:0;z-index:20;background:#fff;border:1px solid #c8c8c8;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:300px;overflow:auto}
-.service-option{display:grid;grid-template-columns:minmax(0,1fr) 42px;border-bottom:1px solid #d0d0d0;min-height:40px}
+.service-option{display:grid;grid-template-columns:minmax(0,1fr) 38px 38px;border-bottom:1px solid #d0d0d0;min-height:40px}
 .service-name,.service-manage{border:0;border-radius:0;background:#fff;text-align:left;padding:10px 14px;color:#344054}
 .service-manage{text-align:center;border-left:1px solid #d0d0d0;padding:8px}
 .service-name:hover,.service-manage:hover{background:#f2f4f7}
@@ -380,3 +380,17 @@ th,td {
 .dialog-actions{display:flex;align-items:center;gap:10px;margin-top:8px}.dialog-actions span{flex:1}
 .danger{color:#b42318;border-color:#fda29b}
 @media(max-width:800px){.sticky-recipe-bar{left:var(--sidebar-collapsed);padding:10px 14px}.recipe-editor-row{grid-template-columns:minmax(0,1fr) 90px 38px}}
+
+/* Requested Income Manager toolbar and sticky summary layout */
+.sticky-recipe-bar{display:none!important}
+#income{padding-bottom:90px}
+.income-sticky-summary{justify-content:space-between}
+.income-sticky-summary #addServiceButton{margin-right:auto}
+.table-toolbar.income-toolbar{justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.transaction-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.transaction-filters label{white-space:nowrap}
+.transaction-filters select{width:auto;min-width:100px;padding:7px 9px;border:1px solid #d0d5dd;border-radius:5px;background:#fff;font-size:13px}
+.transaction-filters #incomeMonthFilter{min-width:150px}
+.service-delete{border:0;border-left:1px solid #d0d0d0;border-radius:0;background:#fff;color:#b42318;font-size:19px;line-height:1;padding:7px}
+.service-delete:hover{background:#fff1f2}
+@media(max-width:800px){.income-sticky-summary{padding:9px 12px;gap:10px}.income-sticky-summary strong{font-size:13px}.transaction-filters{width:100%}.table-toolbar.income-toolbar{align-items:flex-start}.transaction-filters #incomeMonthFilter{min-width:130px}}
