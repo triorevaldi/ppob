@@ -212,15 +212,6 @@ $('deleteServiceButton').onclick=()=>{
  if(!serviceEditing||!confirm('Delete this service and all its recipe rows? Existing sale deductions will not change.'))return;
  customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(serviceEditing));localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));closeServiceEditor();updateItemControls();
 };
-$('recipeForm').onsubmit=e=>{
-  e.preventDefault();
-  const product=$('recipeProduct').value.trim(),stockItem=$('recipeStockItem').value,qtyPerUnit=Number($('recipeQtyPerUnit').value);
-  if(!product||!stockItem||!Number.isFinite(qtyPerUnit)||qtyPerUnit<=0){alert('Enter a product, stock item, and consumption greater than zero.');return}
-  if(Object.prototype.hasOwnProperty.call(BUILTIN_RECIPES,norm(product))){alert('This product already has a built-in recipe.');return}
-  customRecipes.push({id:crypto.randomUUID(),product,stockItem,qtyPerUnit});
-  localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));
-  e.target.reset();$('recipeQtyPerUnit').value=1;updateItemControls();
-};
 window.deleteRecipe=id=>{
   if(!confirm('Delete this recipe component? Existing sales deductions will not change.'))return;
   customRecipes=customRecipes.filter(r=>r.id!==id);localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));updateItemControls();
