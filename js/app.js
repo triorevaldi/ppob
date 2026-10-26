@@ -37,6 +37,21 @@ const BUILTIN_RECIPES={
 };
 function norm(s){return String(s||'').trim().toLowerCase()}
 function findStockItem(name){return stockData.find(x=>norm(x.item)===norm(name))}
+function normalizeStockRecords(){
+  const groups=new Map();
+  stockData.forEach(r=>{
+    const key=norm(r.item);if(!key)return;
+    if(!groups.has(key)){groups.set(key,{...r,purchases:Array.isArray(r.purchases)?[...r.purchases]:[{date:r.date,qty:Number(r.qty)||0,amount:Number(r.amount)||0,legacy:true}]});return}
+    const base=groups.get(key);
+    base.qty=(Number(base.qty)||0)+(Number(r.qty)||0);
+    base.amount=(Number(base.amount)||0)+(Number(r.amount)||0);
+    base.stock=(Number(base.stock??base.currentStock)||0)+(Number(r.stock??r.currentStock)||0);
+    base.purchases.push(...(Array.isArray(r.purchases)?r.purchases:[{date:r.date,qty:Number(r.qty)||0,amount:Number(r.amount)||0,legacy:true}]));
+    if(dateValue(r.date)>dateValue(base.date))base.date=r.date;
+  });
+  const normalized=[...groups.values()];
+  if(normalized.length!==stockData.length){stockData=normalized;localStorage.setItem(STOCK_KEY,JSON.stringify(stockData))}
+}
 function getSaleRecipe(sale){
   const key=norm(sale.item);
   if(BUILTIN_RECIPES[key])return BUILTIN_RECIPES[key](sale);
@@ -234,6 +249,7 @@ window.editSubscription=id=>{const r=subscriptionData.find(x=>x.id===id);if(!r)r
 window.delSubscription=id=>{if(confirm('Delete this subscription bill?')){subscriptionData=subscriptionData.filter(x=>x.id!==id);localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));renderSubscriptions()}};
 
 function renderStock(){
+  updateStockItemChoices();
   if(!stockData.length){$('stockTable').innerHTML='<p class="muted">No stock records yet.</p>';return}
   let rows=stockData.map(r=>{
     let qty=Number(r.qty)||0,stock=Number(r.stock??r.currentStock??0),cost=Number(r.amount)||0;
@@ -243,40 +259,67 @@ function renderStock(){
     let lowStock=stockPct<10?' low-stock':'';
     return `<tr class="${lowStock.trim()}"><td>${dateDisplay(r.date)}</td><td>${esc(r.item)}</td><td>${qty}</td><td class="money">${fmt(cost)}</td><td>${stock.toLocaleString('id-ID')}</td><td>${Math.floor(stockPct)}%</td><td class="money">${fmt(costPerUnit)}</td><td><button onclick="editStock('${r.id}')">Edit</button><button onclick="delStock('${r.id}')">Delete</button></td></tr>`
   }).join('');
-  $('stockTable').innerHTML='<table><tr><th>Date</th><th>Item name</th><th>Qty</th><th class="money">Cost</th><th>Stock</th><th>Stock %</th><th class="money">Cost per unit</th><th>Action</th></tr>'+rows+'</table>'
+  $('stockTable').innerHTML='<table><tr><th>Latest purchase</th><th>Item name</th><th>Total purchased</th><th class="money">Total cost</th><th>Stock</th><th>Stock %</th><th class="money">Avg. cost/unit</th><th>Action</th></tr>'+rows+'</table>'
 }
-
+function updateStockItemChoices(){
+  const select=$('stockExistingItem');if(!select)return;
+  const previous=select.value,names=[...new Set(stockData.map(r=>r.item).filter(Boolean))];
+  select.innerHTML=names.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
+  if(names.includes(previous))select.value=previous;
+  $('stockMode').querySelector('option[value="restock"]').disabled=!names.length;
+  if(!names.length&&$('stockMode').value==='restock')$('stockMode').value='new';
+  updateStockModeUI();
+}
+function updateStockModeUI(){
+  const restock=$('stockMode').value==='restock';
+  $('stockNewItemWrap').hidden=restock;$('stockExistingItemWrap').hidden=!restock;$('stockInitialWrap').hidden=restock;
+  $('stockStock').required=!restock;$('stockItem').required=!restock;$('stockExistingItem').required=restock;
+  $('stockSubmitButton').textContent=stockEditing?'Save changes':(restock?'Restock item':'Add stock');
+  $('stockFlowHelp').textContent=restock
+    ?'Restocking adds the purchase quantity and cost to the existing item. Current stock increases by the purchased quantity; purchase history is retained.'
+    :'For a new item, enter the purchased quantity, total purchase cost, and current remaining stock.';
+}
+$('stockMode').onchange=updateStockModeUI;
 $('stockForm').onsubmit=e=>{
   e.preventDefault();
-  let r={date:$('stockDate').value,item:$('stockItem').value.trim(),qty:+$('stockQty').value,amount:+$('stockAmount').value,stock:+$('stockStock').value};
+  const date=$('stockDate').value,qty=Number($('stockQty').value),amount=Number($('stockAmount').value);
+  if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(amount)||amount<0){alert('Enter a valid purchase quantity and cost.');return}
+  const purchase={date,qty,amount};
   if(stockEditing){
-    let i=stockData.findIndex(x=>x.id===stockEditing);
-    stockData[i]={...stockData[i],...r};
+    const i=stockData.findIndex(x=>x.id===stockEditing);
+    if(i<0){stockEditing=null;alert('Stock item not found.');return}
+    const prior=stockData[i],name=$('stockItem').value.trim();
+    stockData[i]={...prior,date,item:name,qty,amount,stock:Number($('stockStock').value),purchases:[...(prior.purchases||[]),purchase]};
     stockEditing=null;
-    e.target.querySelector('button').textContent='Add stock'
-  }else stockData.push({id:crypto.randomUUID(),...r});
+  }else if($('stockMode').value==='restock'){
+    const name=$('stockExistingItem').value,item=findStockItem(name);
+    if(!item){alert('Choose an existing stock item.');return}
+    const previousPurchase={date:item.date,qty:Number(item.qty)||0,amount:Number(item.amount)||0,legacy:true};
+    item.purchases=Array.isArray(item.purchases)?item.purchases:[previousPurchase];
+    item.qty=(Number(item.qty)||0)+qty;item.amount=(Number(item.amount)||0)+amount;
+    item.stock=Number(item.stock??item.currentStock??0)+qty;item.currentStock=item.stock;item.date=date;
+    item.purchases.push(purchase);
+  }else{
+    const name=$('stockItem').value.trim();
+    if(!name){alert('Enter an item name.');return}
+    if(findStockItem(name)){alert('This item already exists. Choose “Restock existing item” instead to avoid a duplicate.');return}
+    stockData.push({id:crypto.randomUUID(),date,item:name,qty,amount,stock:Number($('stockStock').value),purchases:[purchase]});
+  }
   localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
-    localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));
-  e.target.reset();
-  $('stockDate').value=today();
-  $('stockQty').value=1;
-  renderStock()
+  e.target.reset();$('stockDate').value=today();$('stockQty').value=1;$('stockAmount').value='';
+  stockEditing=null;$('stockMode').value='new';updateStockModeUI();
+  renderStock();renderRecipeManager();renderIncome();
 };
 window.editStock=id=>{
-  let r=stockData.find(x=>x.id===id);
-  stockEditing=id;
-  $('stockDate').value=dateInput(r.date)||today();
-  $('stockItem').value=r.item;
-  $('stockQty').value=r.qty||1;
-  $('stockAmount').value=r.amount||0;
-  $('stockStock').value=r.stock??r.currentStock??'';
-  $('stockForm').querySelector('button').textContent='Save changes'
+  const r=stockData.find(x=>x.id===id);if(!r)return;
+  stockEditing=id;$('stockMode').value='new';$('stockDate').value=dateInput(r.date)||today();$('stockItem').value=r.item;
+  $('stockQty').value=r.qty||1;$('stockAmount').value=r.amount||0;$('stockStock').value=r.stock??r.currentStock??'';
+  $('stockForm').querySelector('button').textContent='Save changes';updateStockModeUI();
 };
 window.delStock=id=>{
-  if(confirm('Delete this stock record?')){
-    stockData=stockData.filter(x=>x.id!==id);
-    localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
-    renderStock()
+  const item=stockData.find(x=>x.id===id);if(!item)return;
+  if(confirm('Delete stock item "'+item.item+'"? Sales recipes using this item may no longer deduct stock.')){
+    stockData=stockData.filter(x=>x.id!==id);localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));renderStock();renderRecipeManager()
   }
 };
 function show(p){$('dashboard').hidden=p!=='dashboard';$('income').hidden=p!=='income';$('expenses').hidden=p!=='expenses';$('subscriptions').hidden=p!=='subscriptions';$('stock').hidden=p!=='stock';$('bd').classList.toggle('active',p==='dashboard');$('bi').classList.toggle('active',p==='income');$('be').classList.toggle('active',p==='expenses');$('bsub').classList.toggle('active',p==='subscriptions');$('bs').classList.toggle('active',p==='stock');if(p==='income')$('date').value=today();if(p==='expenses')$('expenseDate').value=today();if(p==='stock')$('stockDate').value=today();if(p==='subscriptions')$('subscriptionDate').value=today();if(p==='dashboard')renderDashboard()}
@@ -316,6 +359,6 @@ $('importFile').onchange=async e=>{
 };
 $('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bsub').onclick=()=>show('subscriptions');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
-initIncomeFilters();updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
+normalizeStockRecords();initIncomeFilters();updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
 
