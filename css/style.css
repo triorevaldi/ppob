@@ -402,3 +402,10 @@ th,td {
 #recipeRows{width:100%;min-width:0}
 .recipe-editor-row{width:100%;box-sizing:border-box}
 .recipe-editor-row select,.recipe-editor-row input{min-width:0;box-sizing:border-box}
+
+/* Stock purchase and restock flow */
+.stock-form{grid-template-columns:1fr 1fr 1.5fr 1fr 1fr auto;align-items:end}
+#stockForm select{width:100%;padding:9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff}
+#stockFlowHelp{margin:8px 0 0}
+#stockForm [hidden]{display:none!important}
+@media(max-width:800px){.stock-form{grid-template-columns:1fr 1fr}}
