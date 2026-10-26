@@ -41,13 +41,14 @@ function normalizeStockRecords(){
   const groups=new Map();
   stockData.forEach(r=>{
     const key=norm(r.item);if(!key)return;
-    if(!groups.has(key)){groups.set(key,{...r,purchases:Array.isArray(r.purchases)?[...r.purchases]:[{date:r.date,qty:Number(r.qty)||0,amount:Number(r.amount)||0,legacy:true}]});return}
+    if(!groups.has(key)){const base={...r,purchases:Array.isArray(r.purchases)?[...r.purchases]:[{date:r.date,qty:Number(r.qty)||0,amount:Number(r.amount)||0,legacy:true}]};if(!Number.isFinite(Number(base.stockPctBase))||Number(base.stockPctBase)<=0)base.stockPctBase=Number(base.qty)||0;groups.set(key,base);return}
     const base=groups.get(key);
     base.qty=(Number(base.qty)||0)+(Number(r.qty)||0);
     base.amount=(Number(base.amount)||0)+(Number(r.amount)||0);
     base.stock=(Number(base.stock??base.currentStock)||0)+(Number(r.stock??r.currentStock)||0);
     base.purchases.push(...(Array.isArray(r.purchases)?r.purchases:[{date:r.date,qty:Number(r.qty)||0,amount:Number(r.amount)||0,legacy:true}]));
     if(dateValue(r.date)>dateValue(base.date))base.date=r.date;
+    if(!Number.isFinite(Number(base.stockPctBase))||Number(base.stockPctBase)<=0)base.stockPctBase=(Number(base.qty)||0);
   });
   const normalized=[...groups.values()];
   if(normalized.length!==stockData.length){stockData=normalized;localStorage.setItem(STOCK_KEY,JSON.stringify(stockData))}
@@ -253,7 +254,8 @@ function renderStock(){
   if(!stockData.length){$('stockTable').innerHTML='<p class="muted">No stock records yet.</p>';return}
   let rows=stockData.map(r=>{
     let qty=Number(r.qty)||0,stock=Number(r.stock??r.currentStock??0),cost=Number(r.amount)||0;
-    let stockPct=qty>0?(stock/qty*100):0,costPerUnit=qty>0?cost/qty:0;
+    const stockPctBase=Number(r.stockPctBase)>0?Number(r.stockPctBase):qty;
+    let stockPct=stockPctBase>0?(stock/stockPctBase*100):0,costPerUnit=qty>0?cost/qty:0;
     return {r,qty,stock,cost,stockPct,costPerUnit};
   }).sort((a,b)=>a.stockPct-b.stockPct).map(({r,qty,stock,cost,stockPct,costPerUnit})=>{
     let lowStock=stockPct<10?' low-stock':'';
@@ -297,13 +299,14 @@ $('stockForm').onsubmit=e=>{
     const previousPurchase={date:item.date,qty:Number(item.qty)||0,amount:Number(item.amount)||0,legacy:true};
     item.purchases=Array.isArray(item.purchases)?item.purchases:[previousPurchase];
     item.qty=(Number(item.qty)||0)+qty;item.amount=(Number(item.amount)||0)+amount;
-    item.stock=Number(item.stock??item.currentStock??0)+qty;item.currentStock=item.stock;item.date=date;
+    item.stock=Number(item.stock??item.currentStock??0)+qty;item.currentStock=item.stock;item.stockPctBase=item.stock;item.date=date;
     item.purchases.push(purchase);
   }else{
     const name=$('stockItem').value.trim();
     if(!name){alert('Enter an item name.');return}
     if(findStockItem(name)){alert('This item already exists. Choose “Restock existing item” instead to avoid a duplicate.');return}
-    stockData.push({id:crypto.randomUUID(),date,item:name,qty,amount,stock:Number($('stockStock').value),purchases:[purchase]});
+    const initialStock=Number($('stockStock').value);
+    stockData.push({id:crypto.randomUUID(),date,item:name,qty,amount,stock:initialStock,stockPctBase:qty,purchases:[purchase]});
   }
   localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
   e.target.reset();$('stockDate').value=today();$('stockQty').value=1;$('stockAmount').value='';
