@@ -413,3 +413,20 @@ th,td {
 
 .edit-income-dialog .service-dialog-form>div:not(.dialog-heading):not(.dialog-actions){width:100%;box-sizing:border-box}
 .edit-income-dialog .service-dialog-form input{width:100%;box-sizing:border-box}
+
+/* Subscription billing redesign */
+.subscription-page-heading,.subscription-panel-heading,.subscription-list-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.subscription-page-heading h1{margin-bottom:4px}.subscription-page-heading p,.subscription-panel-heading p,.subscription-list-toolbar p{margin-top:4px}
+.subscription-month-control{display:flex;flex-direction:column;gap:6px;min-width:165px}
+.subscription-month-control input,.subscription-filters select,.subscription-bill-form select{padding:9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff;color:#182230}
+.subscription-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.subscription-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;min-width:0}.subscription-stat span{display:block;color:#667085;font-size:13px;margin-bottom:8px}.subscription-stat strong{font-size:clamp(17px,2vw,23px);overflow-wrap:anywhere}
+.subscription-panel h2{font-size:18px;margin:0}.subscriber-form{grid-template-columns:1.2fr 1fr 1.5fr auto auto;margin:16px 0}.subscription-bill-form{grid-template-columns:1.4fr 1fr 1fr 1fr auto;margin:16px 0}.subscription-payment-form{grid-template-columns:2fr 1fr 1fr 2fr auto;margin:16px 0}
+.subscription-panel form>div{min-width:0}.subscription-panel form input,.subscription-panel form select{width:100%;margin-top:4px}
+.subscription-list-toolbar{align-items:center;flex-wrap:wrap;margin-bottom:10px}.subscription-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.subscription-filters label{white-space:nowrap}.subscription-filters select{width:auto}
+.subscription-table-scroll{width:100%;overflow-x:auto}.subscription-table-scroll table{min-width:760px}.subscription-table-scroll th{font-size:12px;color:#667085;white-space:nowrap;background:#f9fafb}.subscription-table-scroll td{vertical-align:middle}
+.subscription-actions{white-space:nowrap}.subscription-actions button{margin:2px;padding:6px 8px;font-size:12px}
+.subscription-status{display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:650;white-space:nowrap;background:#f2f4f7;color:#344054}.subscription-status.unpaid{background:#fee4e2;color:#b42318}.subscription-status.partial{background:#fef0c7;color:#93370d}.subscription-status.paid{background:#dcfae6;color:#05603a}.subscription-status.overpaid{background:#e0eaff;color:#1849a9}.subscription-status.inactive{background:#f2f4f7;color:#667085}.subscription-status.active{background:#dcfae6;color:#05603a}
+.subscription-panel .danger{color:#b42318;border-color:#fda29b}#subscriptions{padding-bottom:30px}
+@media(max-width:1000px){.subscription-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.subscriber-form,.subscription-bill-form,.subscription-payment-form{grid-template-columns:1fr 1fr}.subscription-bill-form .wide,.subscription-payment-form .wide{grid-column:1/-1}}
+@media(max-width:600px){.subscription-page-heading,.subscription-panel-heading,.subscription-list-toolbar{flex-direction:column}.subscription-month-control{width:100%}.subscription-summary{grid-template-columns:1fr 1fr;gap:8px}.subscription-stat{padding:12px}.subscriber-form,.subscription-bill-form,.subscription-payment-form{grid-template-columns:1fr}.subscription-bill-form .wide,.subscription-payment-form .wide{grid-column:1}.subscription-filters{width:100%;align-items:flex-start}.subscription-filters select{flex:1;min-width:0}.subscription-panel{padding:13px}}
