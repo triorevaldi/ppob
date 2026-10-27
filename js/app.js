@@ -37,6 +37,17 @@ const BUILTIN_RECIPES={
 };
 function norm(s){return String(s||'').trim().toLowerCase()}
 function findStockItem(name){return stockData.find(x=>norm(x.item)===norm(name))}
+function normalizeIncomeRecords(){
+  let changed=false;
+  const seen=new Set();
+  incomeData=incomeData.map(r=>{
+    let id=String(r.id||'');
+    if(!id||seen.has(id)){id=crypto.randomUUID();changed=true}
+    seen.add(id);
+    return id===r.id?r:{...r,id};
+  });
+  if(changed)localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
+}
 function normalizeStockRecords(){
   const groups=new Map();
   stockData.forEach(r=>{
@@ -151,18 +162,23 @@ $('incomeForm').onsubmit=e=>{
   if(norm(item)==='photo print'&&(!Number.isFinite(photoSheetsPerUnit)||photoSheetsPerUnit<=0)){alert('Enter a photo-paper fraction greater than zero.');return}
   const r={item,qty:+$('qty').value,amount:+$('amount').value,date:$('date').value,note:$('note').value.trim()};
   if(photoSheetsPerUnit!==undefined)r.photoSheetsPerUnit=photoSheetsPerUnit;
-  let existing=null,legacyEdit=false;
-  if(incomeEditing){existing=incomeData.find(x=>x.id===incomeEditing);legacyEdit=!!existing&&!Array.isArray(existing.stockDeductions)}
+  let existing=null;
+  if(incomeEditing!==null){
+    existing=incomeData.find(x=>x.id===incomeEditing);
+    if(!existing){alert('The income record could not be found. Please reload and try again.');incomeEditing=null;e.target.querySelector('button').textContent='Add income';return}
+  }
   const stockSnapshot=JSON.stringify(stockData);
-  if(existing&&!legacyEdit)restoreSaleStock(existing);
+  if(existing&&Array.isArray(existing.stockDeductions))restoreSaleStock(existing);
   try{
-    if(!legacyEdit)r.stockDeductions=deductForSale(r);
+    // Older records may not have stockDeductions. Track stock for the edited sale
+    // from this point forward instead of silently skipping inventory adjustment.
+    r.stockDeductions=deductForSale(r);
   }catch(err){
     stockData=JSON.parse(stockSnapshot);
     alert(err.message||'Could not update stock. Sale was not saved.');
     return;
   }
-  if(incomeEditing){
+  if(incomeEditing!==null){
     const i=incomeData.findIndex(x=>x.id===incomeEditing);
     incomeData[i]={...existing,...r};
     incomeEditing=null;e.target.querySelector('button').textContent='Add income';
@@ -333,6 +349,7 @@ $('importFile').onchange=async e=>{
     if(!parsed||parsed.app!=='PPOB'||parsed.formatVersion!==1||!Array.isArray(parsed.income)||!Array.isArray(parsed.expenses)||!Array.isArray(parsed.stock)||(parsed.subscriptions!==undefined&&!Array.isArray(parsed.subscriptions))||(parsed.recipes!==undefined&&!Array.isArray(parsed.recipes)))throw new Error('This file is not a supported PPOB backup.');
     if(!confirm('Import this backup and replace all current income, expense, and stock records? This cannot be undone.')){e.target.value='';return}
     incomeData=parsed.income;expenseData=parsed.expenses;stockData=parsed.stock;subscriptionData=parsed.subscriptions||[];customRecipes=parsed.recipes||[];
+    normalizeIncomeRecords();
     localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
     localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));
     localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
@@ -353,6 +370,6 @@ $('importFile').onchange=async e=>{
 };
 $('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bsub').onclick=()=>show('subscriptions');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
-normalizeStockRecords();initIncomeFilters();updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
+normalizeIncomeRecords();normalizeStockRecords();initIncomeFilters();updateItemControls();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
 
