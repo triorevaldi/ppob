@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1',STOCK_KEY='ppob.stock.v1',SUBSCRIBER_KEY='ppob.subscribers.v1',SUBSCRIPTION_BILL_KEY='ppob.subscriptionBills.v3',SUBSCRIPTION_PAYMENT_KEY='ppob.subscriptionPayments.v2',RECIPE_KEY='ppob.recipes.v1';
 let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriberData=JSON.parse(localStorage.getItem(SUBSCRIBER_KEY)||'[]'),subscriptionBills=JSON.parse(localStorage.getItem(SUBSCRIPTION_BILL_KEY)||'[]'),subscriptionPayments=JSON.parse(localStorage.getItem(SUBSCRIPTION_PAYMENT_KEY)||'[]'),customRecipes=JSON.parse(localStorage.getItem(RECIPE_KEY)||'[]'),expenseEditing=null,stockEditing=null,subscriberEditing=null,subscriptionBillEditing=null,incomeSortDesc=true,expenseSortDesc=true,serviceEditing=null,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
 $('date').value=today();$('expenseDate').value=today();$('stockDate').value=today();$('month').value=monthKey();
+migrateLegacyServicesToCustom();
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateValue(s){let iso=dateISO(s);return iso?new Date(iso+'T00:00:00').getTime():0}
@@ -37,6 +38,14 @@ const BUILTIN_RECIPES={
 };
 function norm(s){return String(s||'').trim().toLowerCase()}
 function findStockItem(name){return stockData.find(x=>norm(x.item)===norm(name))}
+function migrateLegacyServicesToCustom(){
+  const legacy={'print':['Print paper'],'photo print':['Photo paper'],'jilid':['Thick Paper','Colorful Plastic','Lakban 3.5cm'],'laminating':['Laminating Film']};let changed=false;
+  for(const [oldName,materials] of Object.entries(legacy)){
+    const candidates=[...new Set(customRecipes.map(r=>r.product).filter(Boolean))].map(product=>{const recipe=customRecipes.filter(r=>norm(r.product)===norm(product)&&r.stockItem&&Number(r.qtyPerUnit)>0);return {product,score:materials.filter(m=>recipe.some(r=>norm(r.stockItem)===norm(m))).length}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+    if(!candidates.length||(candidates.length>1&&candidates[0].score===candidates[1].score))continue;
+    incomeData=incomeData.map(r=>{if(norm(r.item)!==oldName)return r;changed=true;return {...r,item:candidates[0].product}});
+  }if(changed)localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
+}
 function normalizeIncomeRecords(){
   let changed=false;
   const seen=new Set();
@@ -99,7 +108,7 @@ function deductForSale(sale){
   return movements;
 }
 function persistStock(){localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));renderStock()}
-function allServiceNames(){return [...new Set([...Object.keys(BUILTIN_RECIPES).filter(n=>norm(n)!=='print & laminating').map(n=>({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating'}[n]||n)),...customRecipes.map(r=>r.product).filter(Boolean)])].filter(n=>norm(n)!=='print & laminating'&&norm(n)!=='other service…')}
+function allServiceNames(){return [...new Set(customRecipes.map(r=>r.product).filter(Boolean))].filter(n=>norm(n)!=='print & laminating'&&norm(n)!=='other service…')}
 function updateItemControls(){
   if(!$('item'))return;
   const item=$('item').value||'Print';
@@ -111,7 +120,7 @@ function updateItemControls(){
 function selectedSaleItem(){return $('item').value==='__other__' ? $('customItem').value.trim() : $('item').value}
 function renderServiceOptions(){
  const host=$('serviceOptions');if(!host)return;
- const builtins=['Print','Photo print','Jilid','Laminating'].map(norm);
+ const builtins=[];
  const customNames=[...new Set(customRecipes.map(r=>r.product).filter(Boolean))];
  host.innerHTML=allServiceNames().map(name=>'<div class="service-option'+(norm(name)===norm($('item').value)?' selected':'')+'"><button type="button" class="service-name" data-service="'+esc(name)+'">'+esc(name)+'</button><button type="button" class="service-manage" data-manage="'+esc(name)+'" aria-label="Edit '+esc(name)+'" title="Edit service">✎</button>'+(builtins.includes(norm(name))?'':'<button type="button" class="service-delete" data-delete="'+esc(name)+'" aria-label="Delete '+esc(name)+'" title="Delete service">×</button>')+'</div>').join('');
  host.querySelectorAll('[data-service]').forEach(b=>b.onclick=()=>{const name=b.dataset.service;$('item').value=name;$('selectedServiceLabel').textContent=name==='__other__'?'Other service…':name;$('customItemWrap').hidden=name!=='__other__';$('photoUsageWrap').hidden=norm(name)!=='photo print';$('servicePicker').hidden=true;if(name==='__other__')$('customItem').focus()});
@@ -133,17 +142,13 @@ function addRecipeEditorRow(row={}){
  div.querySelector('button').onclick=()=>div.remove();host.appendChild(div);
 }
 function openServiceEditor(name){
- serviceEditing=customRecipes.some(r=>norm(r.product)===norm(name))?name:null;
- const builtin=Object.keys(BUILTIN_RECIPES).some(k=>norm(({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[k]||k))===norm(name));
- $('serviceDialogTitle').textContent=serviceEditing?'Edit service/product':'Add service/product';
- $('recipeProduct').value=serviceEditing|| (builtin?'':name);
- $('recipeProduct').readOnly=builtin;
- $('deleteServiceButton').hidden=!serviceEditing;
- $('recipeRows').innerHTML='';
- if(serviceEditing){customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).forEach(r=>addRecipeEditorRow(r))}
- else if(!builtin&&stockData.length)addRecipeEditorRow({stockItem:stockData[0].item,qtyPerUnit:1});
- if(builtin){$('recipeRows').innerHTML='<p class="muted">This built-in service uses its predefined stock recipe and cannot be edited here.</p>';$('recipeProduct').value=name;$('recipeForm').querySelector('[type=submit]').disabled=true;$('addRecipeRow').disabled=true}else{$('recipeForm').querySelector('[type=submit]').disabled=false;$('addRecipeRow').disabled=false}
- $('serviceDialog').showModal();
+  serviceEditing=customRecipes.some(r=>norm(r.product)===norm(name))?name:null;
+  $('serviceDialogTitle').textContent=serviceEditing?'Edit service/product':'Add service/product';
+  $('recipeProduct').value=serviceEditing||name||'';$('recipeProduct').readOnly=false;
+  $('deleteServiceButton').hidden=!serviceEditing;$('recipeRows').innerHTML='';
+  if(serviceEditing)customRecipes.filter(r=>norm(r.product)===norm(serviceEditing)).forEach(r=>addRecipeEditorRow(r));
+  else if(stockData.length)addRecipeEditorRow({stockItem:stockData[0].item,qtyPerUnit:1});
+  $('recipeForm').querySelector('[type=submit]').disabled=false;$('addRecipeRow').disabled=false;$('serviceDialog').showModal();
 }
 function closeServiceEditor(){ $('serviceDialog').close();serviceEditing=null;$('recipeProduct').readOnly=false;$('recipeForm').querySelector('[type=submit]').disabled=false;$('addRecipeRow').disabled=false }
 
@@ -239,9 +244,7 @@ $('closeServiceDialog').onclick=closeServiceEditor;
 $('addRecipeRow').onclick=()=>addRecipeEditorRow({stockItem:stockData[0]?.item||'',qtyPerUnit:1});
 $('recipeForm').onsubmit=e=>{
  e.preventDefault();const product=$('recipeProduct').value.trim();
- if(!product){alert('Enter a service/product name.');return}
- if(Object.keys(BUILTIN_RECIPES).some(k=>norm(({print:'Print','photo print':'Photo print',jilid:'Jilid',laminating:'Laminating','print & laminating':'Print & Laminating'}[k]||k))===norm(product))){alert('Built-in service recipes cannot be changed here.');return}
- const rows=[...$('recipeRows').querySelectorAll('.recipe-editor-row')].map(row=>({stockItem:row.querySelector('select').value,qtyPerUnit:Number(row.querySelector('input').value)}));
+ if(!product){alert('Enter a service/product name.');return}const rows=[...$('recipeRows').querySelectorAll('.recipe-editor-row')].map(row=>({stockItem:row.querySelector('select').value,qtyPerUnit:Number(row.querySelector('input').value)}));
  if(rows.some(r=>!r.stockItem||!Number.isFinite(r.qtyPerUnit)||r.qtyPerUnit<=0)){alert('Check each stock item and its consumption amount, or remove all material rows for an income-only service.');return}
  if(serviceEditing)customRecipes=customRecipes.filter(r=>norm(r.product)!==norm(serviceEditing));
  customRecipes.push(...(rows.length?rows.map(r=>({id:crypto.randomUUID(),product,stockItem:r.stockItem,qtyPerUnit:r.qtyPerUnit})): [{id:crypto.randomUUID(),product,stockItem:'',qtyPerUnit:0}]));
