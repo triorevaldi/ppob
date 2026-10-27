@@ -418,6 +418,7 @@ $('importFile').onchange=async e=>{
     if(!parsed||parsed.app!=='PPOB'||![1,2,3].includes(parsed.formatVersion)||!Array.isArray(parsed.income)||!Array.isArray(parsed.expenses)||!Array.isArray(parsed.stock)||(parsed.subscriptions!==undefined&&!Array.isArray(parsed.subscriptions))||(parsed.subscribers!==undefined&&!Array.isArray(parsed.subscribers))||(parsed.subscriptionBills!==undefined&&!Array.isArray(parsed.subscriptionBills))||(parsed.subscriptionPayments!==undefined&&!Array.isArray(parsed.subscriptionPayments))||(parsed.recipes!==undefined&&!Array.isArray(parsed.recipes)))throw new Error('This file is not a supported PPOB backup.');
     if(!confirm('Import this backup and replace all current income, expense, stock, and subscription records? This cannot be undone.')){e.target.value='';return}
     incomeData=parsed.income;expenseData=parsed.expenses;stockData=parsed.stock;subscriberData=parsed.formatVersion>=3?(parsed.subscribers||[]):[];subscriptionBills=parsed.formatVersion>=3?(parsed.subscriptionBills||[]):[];subscriptionPayments=parsed.formatVersion>=3?(parsed.subscriptionPayments||[]):[];customRecipes=parsed.recipes||[];
+    migrateLegacyServicesToCustom();
     normalizeIncomeRecords();
     localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
     localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));
