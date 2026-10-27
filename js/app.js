@@ -73,7 +73,7 @@ function restoreSaleStock(sale){
   if(!Array.isArray(sale.stockDeductions))return;
   sale.stockDeductions.forEach(m=>{
     const item=stockData.find(s=>s.id===m.stockId)||findStockItem(m.stockItem);
-    if(item)item.stock=Number(item.stock??item.currentStock??0)+Number(m.qty||0);
+    if(item){item.stock=Number(item.stock??item.currentStock??0)+Number(m.qty||0);item.currentStock=item.stock;}
   });
 }
 function deductForSale(sale){
@@ -93,7 +93,7 @@ function deductForSale(sale){
   }
   const movements=[];
   for(const {item,qty} of totals.values()){
-    item.stock=Number(item.stock??item.currentStock??0)-qty;
+    item.stock=Number(item.stock??item.currentStock??0)-qty;item.currentStock=item.stock;
     movements.push({stockId:item.id,stockItem:item.item,qty});
   }
   return movements;
@@ -346,12 +346,24 @@ $('stockForm').onsubmit=e=>{
   e.preventDefault();
   const date=$('stockDate').value,qty=Number($('stockQty').value),amount=Number($('stockAmount').value);
   if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(amount)||amount<0){alert('Enter a valid purchase quantity and cost.');return}
+  if(!dateISO(date)){alert('Enter a valid purchase date.');return}
   const purchase={date,qty,amount};
   if(stockEditing){
     const i=stockData.findIndex(x=>x.id===stockEditing);
     if(i<0){stockEditing=null;alert('Stock item not found.');return}
     const prior=stockData[i],name=$('stockItem').value.trim();
-    stockData[i]={...prior,date,item:name,qty,amount,stock:Number($('stockStock').value),purchases:[...(prior.purchases||[]),purchase]};
+    if(!name){alert('Enter an item name.');return}
+    const duplicate=stockData.find((x,j)=>j!==i&&norm(x.item)===norm(name));
+    if(duplicate){alert('Another stock item already uses this name. Rename or merge the duplicate first.');return}
+    const targetStock=Number($('stockStock').value);
+    if(!Number.isFinite(targetStock)||targetStock<0){alert('Enter a valid current stock (zero or greater).');return}
+    const history=Array.isArray(prior.purchases)&&prior.purchases.length?prior.purchases.map(p=>({...p})): [{date:prior.date,qty:Number(prior.qty)||0,amount:Number(prior.amount)||0,legacy:true}];
+    const lastIndex=history.length-1;
+    const otherQty=history.reduce((sum,p,j)=>sum+(j===lastIndex?0:Number(p.qty)||0),0);
+    const otherAmount=history.reduce((sum,p,j)=>sum+(j===lastIndex?0:Number(p.amount)||0),0);
+    if(qty<otherQty||amount<otherAmount){alert('The edited total cannot be lower than the other purchase-history entries. To correct old duplicate purchases, remove or correct those entries in the backup first.');return}
+    history[lastIndex]={...history[lastIndex],date,qty:qty-otherQty,amount:amount-otherAmount};
+    stockData[i]={...prior,date,item:name,qty,amount,stock:targetStock,currentStock:targetStock,stockPctBase:Math.max(Number(prior.stockPctBase)||0,qty),purchases:history};
     stockEditing=null;
   }else if($('stockMode').value==='restock'){
     const name=$('stockExistingItem').value,item=findStockItem(name);
@@ -359,14 +371,15 @@ $('stockForm').onsubmit=e=>{
     const previousPurchase={date:item.date,qty:Number(item.qty)||0,amount:Number(item.amount)||0,legacy:true};
     item.purchases=Array.isArray(item.purchases)?item.purchases:[previousPurchase];
     item.qty=(Number(item.qty)||0)+qty;item.amount=(Number(item.amount)||0)+amount;
-    item.stock=Number(item.stock??item.currentStock??0)+qty;item.currentStock=item.stock;item.stockPctBase=item.stock;item.date=date;
+    item.stock=Number(item.stock??item.currentStock??0)+qty;item.currentStock=item.stock;item.stockPctBase=Math.max(Number(item.stockPctBase)||0,item.stock);item.date=date;
     item.purchases.push(purchase);
   }else{
     const name=$('stockItem').value.trim();
     if(!name){alert('Enter an item name.');return}
     if(findStockItem(name)){alert('This item already exists. Choose “Restock existing item” instead to avoid a duplicate.');return}
     const initialStock=Number($('stockStock').value);
-    stockData.push({id:crypto.randomUUID(),date,item:name,qty,amount,stock:initialStock,stockPctBase:qty,purchases:[purchase]});
+    if(!Number.isFinite(initialStock)||initialStock<0){alert('Enter a valid current stock (zero or greater).');return}
+    stockData.push({id:crypto.randomUUID(),date,item:name,qty,amount,stock:initialStock,currentStock:initialStock,stockPctBase:qty,purchases:[purchase]});
   }
   localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
   e.target.reset();$('stockDate').value=today();$('stockQty').value=1;$('stockAmount').value='';
