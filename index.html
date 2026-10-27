@@ -59,6 +59,21 @@
             <button type="button" id="addRecipeRow">＋ Add stock item</button>
             <div class="dialog-actions"><button type="button" id="deleteServiceButton" class="danger" hidden>Delete service</button><span></span><button type="submit" class="primary">Save service</button></div>
           </form></dialog>
+          <dialog id="editIncomeDialog" class="service-dialog edit-income-dialog">
+            <form id="editIncomeForm" class="service-dialog-form">
+              <div class="dialog-heading">
+                <div><h2>Edit income record</h2><p class="muted">Changes apply only to this transaction.</p></div>
+                <button type="button" id="closeEditIncome" aria-label="Close">✕</button>
+              </div>
+              <div><label for="editIncomeItem">Product / service</label><input id="editIncomeItem" required maxlength="160"></div>
+              <div id="editPhotoUsageWrap" hidden><label for="editPhotoSheetsPerUnit">Photo paper per unit (A4 sheet)</label><input id="editPhotoSheetsPerUnit" type="number" min="0.01" step="0.01" value="0.5"></div>
+              <div><label for="editIncomeQty">Qty</label><input id="editIncomeQty" type="number" min="1" step="1" required></div>
+              <div><label for="editIncomeAmount">Income amount (IDR)</label><input id="editIncomeAmount" type="number" min="0" step="1" required></div>
+              <div><label for="editIncomeDate">Date</label><input id="editIncomeDate" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" required></div>
+              <div><label for="editIncomeNote">Note</label><input id="editIncomeNote"></div>
+              <div class="dialog-actions"><span></span><button type="button" id="cancelEditIncome">Cancel</button><button type="submit" class="primary">Save changes</button></div>
+            </form>
+          </dialog>
         </section>
         <div class="sticky-summary income-sticky-summary" id="incomeSummary"><button type="button" id="addServiceButton" class="primary">＋ Add service/product</button></div>
       </div>
