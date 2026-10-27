@@ -409,3 +409,7 @@ th,td {
 #stockFlowHelp{margin:8px 0 0}
 #stockForm [hidden]{display:none!important}
 @media(max-width:800px){.stock-form{grid-template-columns:1fr 1fr}}
+
+
+.edit-income-dialog .service-dialog-form>div:not(.dialog-heading):not(.dialog-actions){width:100%;box-sizing:border-box}
+.edit-income-dialog .service-dialog-form input{width:100%;box-sizing:border-box}

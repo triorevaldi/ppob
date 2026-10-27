@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded',()=>{
 const INCOME_KEY='ppob.income.v1',EXPENSE_KEY='ppob.expense.v1',STOCK_KEY='ppob.stock.v1',SUBSCRIPTION_KEY='ppob.subscriptions.v1',RECIPE_KEY='ppob.recipes.v1';
-let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriptionData=JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY)||'[]'),customRecipes=JSON.parse(localStorage.getItem(RECIPE_KEY)||'[]'),incomeEditing=null,expenseEditing=null,stockEditing=null,subscriptionEditing=null,incomeSortDesc=true,expenseSortDesc=true,serviceEditing=null,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
+let incomeData=JSON.parse(localStorage.getItem(INCOME_KEY)||'[]'),expenseData=JSON.parse(localStorage.getItem(EXPENSE_KEY)||'[]'),stockData=JSON.parse(localStorage.getItem(STOCK_KEY)||'[]'),subscriptionData=JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY)||'[]'),customRecipes=JSON.parse(localStorage.getItem(RECIPE_KEY)||'[]'),expenseEditing=null,stockEditing=null,subscriptionEditing=null,incomeSortDesc=true,expenseSortDesc=true,serviceEditing=null,$=x=>document.getElementById(x),fmt=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n),today=()=>{let d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()},monthKey=()=>{let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')},dateISO=s=>{const v=String(s||'').trim();const parts=v.split(v.includes('/')?'/':'-');if(parts.length!==3)return '';let y,m,d;if(v.includes('/')){d=parts[0];m=parts[1];y=parts[2]}else if(parts[0].length===4){y=parts[0];m=parts[1];d=parts[2]}else{d=parts[0];m=parts[1];y=parts[2]}return String(y)+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')},dateInput=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0]},dateDisplay=s=>{let iso=dateISO(s);if(!iso)return String(s||'');let p=iso.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})},recordMonth=r=>dateISO(r.date).slice(0,7),chartFmt=n=>{let a=Math.abs(Number(n)),s=a>=1e9?'b':a>=1e6?'m':a>=1e3?'k':'',v=s?(a/(s==='b'?1e9:s==='m'?1e6:1e3)):a;return (Number.isInteger(v)?v:v.toFixed(1).replace(/\\.0$/,''))+s};
 $('date').value=today();$('expenseDate').value=today();$('stockDate').value=today();$('subscriptionDate').value=today();$('month').value=monthKey();
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -160,46 +160,69 @@ $('incomeForm').onsubmit=e=>{
   if(!item){alert('Enter a product or service name.');return}
   const photoSheetsPerUnit=norm(item)==='photo print'?Number($('photoSheetsPerUnit').value):undefined;
   if(norm(item)==='photo print'&&(!Number.isFinite(photoSheetsPerUnit)||photoSheetsPerUnit<=0)){alert('Enter a photo-paper fraction greater than zero.');return}
-  const r={item,qty:+$('qty').value,amount:+$('amount').value,date:$('date').value,note:$('note').value.trim()};
+  const r={id:crypto.randomUUID(),item,qty:+$('qty').value,amount:+$('amount').value,date:$('date').value,note:$('note').value.trim()};
   if(photoSheetsPerUnit!==undefined)r.photoSheetsPerUnit=photoSheetsPerUnit;
-  let existing=null;
-  if(incomeEditing!==null){
-    existing=incomeData.find(x=>x.id===incomeEditing);
-    if(!existing){alert('The income record could not be found. Please reload and try again.');incomeEditing=null;e.target.querySelector('button').textContent='Add income';return}
-  }
   const stockSnapshot=JSON.stringify(stockData);
-  if(existing&&Array.isArray(existing.stockDeductions))restoreSaleStock(existing);
-  try{
-    // Older records may not have stockDeductions. Track stock for the edited sale
-    // from this point forward instead of silently skipping inventory adjustment.
-    r.stockDeductions=deductForSale(r);
-  }catch(err){
+  try{r.stockDeductions=deductForSale(r)}catch(err){
     stockData=JSON.parse(stockSnapshot);
     alert(err.message||'Could not update stock. Sale was not saved.');
     return;
   }
-  if(incomeEditing!==null){
-    const i=incomeData.findIndex(x=>x.id===incomeEditing);
-    incomeData[i]={...existing,...r};
-    incomeEditing=null;e.target.querySelector('button').textContent='Add income';
-  }else incomeData.push({id:crypto.randomUUID(),...r});
+  incomeData.push(r);
   localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
   localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
   e.target.reset();$('qty').value=1;$('date').value=today();$('photoSheetsPerUnit').value='0.5';
   updateItemControls();renderIncome();renderDashboard();renderStock();
 };
+let incomeModalEditingId=null;
+function closeEditIncomeDialog(){
+  $('editIncomeDialog').close();
+  incomeModalEditingId=null;
+  $('editIncomeForm').reset();
+}
+$('closeEditIncome').onclick=closeEditIncomeDialog;
+$('cancelEditIncome').onclick=closeEditIncomeDialog;
+$('editIncomeItem').oninput=()=>{
+  $('editPhotoUsageWrap').hidden=norm($('editIncomeItem').value)!=='photo print';
+};
+$('editIncomeForm').onsubmit=e=>{
+  e.preventDefault();
+  if(incomeModalEditingId===null)return;
+  const index=incomeData.findIndex(x=>x.id===incomeModalEditingId);
+  if(index<0){alert('This income record could not be found. Please refresh and try again.');closeEditIncomeDialog();return}
+  const existing=incomeData[index],item=$('editIncomeItem').value.trim();
+  if(!item){alert('Enter a product or service name.');return}
+  const qty=Number($('editIncomeQty').value),amount=Number($('editIncomeAmount').value);
+  if(!Number.isInteger(qty)||qty<1||!Number.isFinite(amount)||amount<0){alert('Enter a valid quantity and income amount.');return}
+  const photoSheetsPerUnit=norm(item)==='photo print'?Number($('editPhotoSheetsPerUnit').value):undefined;
+  if(photoSheetsPerUnit!==undefined&&(!Number.isFinite(photoSheetsPerUnit)||photoSheetsPerUnit<=0)){alert('Enter a photo-paper fraction greater than zero.');return}
+  const updated={...existing,item,qty,amount,date:$('editIncomeDate').value,note:$('editIncomeNote').value.trim()};
+  delete updated.photoSheetsPerUnit;
+  if(photoSheetsPerUnit!==undefined)updated.photoSheetsPerUnit=photoSheetsPerUnit;
+  const stockSnapshot=JSON.stringify(stockData);
+  if(Array.isArray(existing.stockDeductions))restoreSaleStock(existing);
+  try{updated.stockDeductions=deductForSale(updated)}catch(err){
+    stockData=JSON.parse(stockSnapshot);
+    alert(err.message||'Could not update stock. The income record was not changed.');
+    return;
+  }
+  incomeData[index]=updated;
+  localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));
+  localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
+  closeEditIncomeDialog();
+  renderIncome();renderDashboard();renderStock();
+};
 window.editIncome=id=>{
   const r=incomeData.find(x=>x.id===id);if(!r)return;
-  incomeEditing=id;
-  const standard=['Print','Photo print','Jilid','Laminating','Print & Laminating'];
-  const known=standard.find(n=>norm(n)===norm(r.item))||customRecipes.find(n=>norm(n.product)===norm(r.item))?.product;
-  $('item').value=known||'__other__';$('selectedServiceLabel').textContent=known||'Other service…';
-  $('customItem').value=known?'':r.item;
-  $('customItemWrap').hidden=!!known;
-  $('photoUsageWrap').hidden=norm(r.item)!=='photo print';
-  $('photoSheetsPerUnit').value=r.photoSheetsPerUnit??0.5;
-  $('qty').value=r.qty;$('amount').value=r.amount;$('date').value=dateInput(r.date);$('note').value=r.note||'';
-  $('incomeForm').querySelector('button').textContent='Save changes';
+  incomeModalEditingId=id;
+  $('editIncomeItem').value=r.item||'';
+  $('editPhotoUsageWrap').hidden=norm(r.item)!=='photo print';
+  $('editPhotoSheetsPerUnit').value=r.photoSheetsPerUnit??0.5;
+  $('editIncomeQty').value=r.qty??1;
+  $('editIncomeAmount').value=r.amount??0;
+  $('editIncomeDate').value=dateInput(r.date);
+  $('editIncomeNote').value=r.note||'';
+  $('editIncomeDialog').showModal();
 };
 window.delIncome=id=>{
   const r=incomeData.find(x=>x.id===id);if(!r)return;
@@ -355,7 +378,7 @@ $('importFile').onchange=async e=>{
     localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));
     localStorage.setItem(SUBSCRIPTION_KEY,JSON.stringify(subscriptionData));
     localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));
-    incomeEditing=expenseEditing=stockEditing=null;
+    expenseEditing=stockEditing=null;
     $('incomeForm').reset();$('expenseForm').reset();$('stockForm').reset();$('subscriptionForm').reset();
     $('qty').value=$('expenseQty').value=$('stockQty').value=1;
     $('date').value=$('expenseDate').value=$('stockDate').value=$('subscriptionDate').value=today();$('subscriptionPaid').value=0;
