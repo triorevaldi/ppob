@@ -438,3 +438,14 @@ th,td {
 .subscription-dialog{width:min(520px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 24px 70px rgba(16,24,40,.24)}.subscription-dialog::backdrop{background:rgba(16,24,40,.45);backdrop-filter:blur(2px)}.subscription-dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.subscription-dialog-heading h2{margin:0;font-size:20px}.dialog-close{font-size:25px;line-height:1;border:0;background:transparent;padding:4px 8px}.subscription-dialog form{display:grid;grid-template-columns:1fr;gap:13px;margin:18px 0 0}.subscription-dialog form>div{min-width:0}.subscription-dialog form input,.subscription-dialog form select{width:100%;margin-top:5px}.subscription-dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:5px}.subscription-dialog form button[hidden]{display:none}
 @media(max-width:1000px){.subscription-sticky-bar{left:var(--sidebar-collapsed,72px);padding:9px 12px;gap:10px}.subscription-summary{gap:5px}.subscription-stat{padding:8px}.subscription-stat span{font-size:10px}.subscription-stat strong{font-size:12px}}
 @media(max-width:650px){.subscription-sticky-bar{left:0;flex-direction:column;align-items:stretch;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}.subscription-sticky-actions{display:grid;grid-template-columns:1fr 1fr}.subscription-sticky-actions button{padding:9px 8px}.subscription-summary{width:100%;gap:5px}.subscription-stat{padding:6px 7px}.subscription-stat span{font-size:9px}.subscription-stat strong{font-size:11px}#subscriptions{padding-bottom:145px}.subscription-subnav-item{flex:1;text-align:center}}
+
+/* Dashboard sticky bar: backup actions on the left, month selector on the right */
+#dashboard{padding-bottom:90px}
+.dashboard-sticky-bar{justify-content:space-between;flex-wrap:wrap;gap:12px 16px}
+.dashboard-backup-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.dashboard-backup-actions label.button{display:inline-block;font-size:13.333px;cursor:pointer}
+.dashboard-backup-actions #backupStatus{margin:0;font-size:13px}
+.dashboard-month-control{display:flex;align-items:center;gap:10px;margin-left:auto}
+.dashboard-month-control label{font-size:13px}
+.dashboard-month-control input{width:auto}
+@media(max-width:800px){.dashboard-sticky-bar{padding:9px 12px;gap:8px 12px}.dashboard-backup-actions{gap:8px}#dashboard{padding-bottom:130px}}
