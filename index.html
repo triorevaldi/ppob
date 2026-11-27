@@ -28,7 +28,7 @@
         <section class="backup-card"><h2>Data backup</h2><p class="muted">Export all income, expense, and stock records to a JSON file, or import a previous backup. Importing replaces the current records on this browser.</p><div class="backup-actions"><button type="button" id="exportData" class="primary">Export backup (JSON)</button><label class="button-like button secondary" for="importFile">Import backup (JSON)</label><input id="importFile" type="file" accept=".json,application/json" hidden></div><p id="backupStatus" class="muted" role="status"></p></section>
         <div class="month-toolbar"><label for="month">Month</label><input id="month" type="month"></div>
         -->
-        <div class="cards">
+        <section class="google-sync-panel" id="googleSyncPanel"><div class="google-sync-heading"><div><h2>Google Sheets Sync</h2><p class="muted">Connect your Google account to synchronize PPOB records.</p></div><span class="google-sync-tag">Two-way</span></div><div class="google-sync-config"><label for="googleOAuthClientId">Google OAuth Client ID</label><input id="googleOAuthClientId" type="text" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com"><button type="button" id="googleSaveConfig">Save configuration</button></div><div class="google-sync-actions"><button type="button" class="primary" id="googleSyncNow">Connect & Sync Now</button><label><input type="checkbox" id="googleAutoSync" checked> Automatic sync</label><a id="googleSyncLink" href="#" target="_blank" rel="noopener" hidden>Open Google Spreadsheet ↗</a></div><p id="googleSyncStatus" class="muted" role="status">Not connected. Your local PPOB data remains unchanged until you start synchronization.</p><p class="google-sync-note">First sync creates a new spreadsheet and uploads PPOB's existing local records. Keep a JSON backup before connecting. Records are matched by ID and the newest timestamp wins; simultaneous-edit conflict review and deletion synchronization are not yet enabled.</p></section><div class="cards">
           <div class="card"><div class="muted">Monthly Income</div><h2 id="monthlyIncome">Rp 0</h2></div>
           <div class="card"><div class="muted">Monthly Expenses</div><h2 id="monthlyExpense">Rp 0</h2></div>
           <div class="card"><div class="muted">Monthly Net</div><h2 id="monthlyNet">Rp 0</h2></div>
@@ -124,6 +124,6 @@
       </div>
     </main>
   </div>
-  <script src="js/app.js?v=20261028-subscription-layout-1"></script>
+  <script src="js/app.js?v=20261127-google-sync-1"></script>\n  <script src="js/google-sheets-sync.js?v=1"></script>
 </body>
 </html>

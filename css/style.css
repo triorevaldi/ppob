@@ -449,3 +449,14 @@ th,td {
 .dashboard-month-control label{font-size:13px}
 .dashboard-month-control input{width:auto}
 @media(max-width:800px){.dashboard-sticky-bar{padding:9px 12px;gap:8px 12px}.dashboard-backup-actions{gap:8px}#dashboard{padding-bottom:130px}}
+
+/* Google Sheets synchronization panel */
+.google-sync-panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin:18px 0 22px;box-shadow:0 2px 8px rgba(16,24,40,.04)}
+.google-sync-heading,.google-sync-actions,.google-sync-config{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.google-sync-heading{justify-content:space-between}.google-sync-heading h2{margin:0 0 4px;font-size:19px}.google-sync-heading p{margin:0}
+.google-sync-tag{font-size:12px;font-weight:700;color:#05603a;background:#dcfae6;border-radius:20px;padding:5px 10px}
+.google-sync-config{margin-top:16px}.google-sync-config label{font-weight:600}.google-sync-config input{flex:1;min-width:260px;padding:10px;border:1px solid #d0d5dd;border-radius:7px}
+.google-sync-actions{margin-top:12px}.google-sync-actions label{display:flex;align-items:center;gap:6px}.google-sync-actions a{font-size:13px}
+#googleSyncStatus{margin:12px 0 0;font-size:13px}#googleSyncStatus[data-error="true"]{color:#b42318}
+.google-sync-note{font-size:12px;color:#667085;margin:8px 0 0;line-height:1.5}
+@media(max-width:600px){.google-sync-panel{padding:14px}.google-sync-config{align-items:stretch}.google-sync-config input{min-width:100%}.google-sync-actions{align-items:flex-start;flex-direction:column}}
