@@ -443,6 +443,20 @@ $('importFile').onchange=async e=>{
 };
 $('bd').onclick=()=>show('dashboard');$('bi').onclick=()=>show('income');$('be').onclick=()=>show('expenses');$('bsub').onclick=()=>show('subscriptions');$('bs').onclick=()=>show('stock');$('month').onchange=renderDashboard;
 $('toggleSidebar').onclick=()=>{let c=$('sidebar').classList.toggle('collapsed');$('toggleSidebar').textContent=c?'›':'‹';$('toggleSidebar').title=c?'Expand sidebar':'Collapse sidebar';$('toggleSidebar').setAttribute('aria-label',$('toggleSidebar').title)};
+
+window.PPOB_SYNC_BRIDGE={
+ getData(){
+  const collections={income:incomeData,expenses:expenseData,stock:stockData,subscribers:subscriberData,subscriptionBills,subscriptionPayments,recipes:customRecipes};
+  for(const [key,records] of Object.entries(collections))records.forEach((r,i)=>{if(!r.id)r.id=crypto.randomUUID();if(!r.updatedAt)r.updatedAt=r.createdAt||new Date(0).toISOString()});
+  return collections;
+ },
+ applyData(data){
+  incomeData=data.income||[];expenseData=data.expenses||[];stockData=data.stock||[];subscriberData=data.subscribers||[];subscriptionBills=data.subscriptionBills||[];subscriptionPayments=data.subscriptionPayments||[];customRecipes=data.recipes||[];
+  localStorage.setItem(INCOME_KEY,JSON.stringify(incomeData));localStorage.setItem(EXPENSE_KEY,JSON.stringify(expenseData));localStorage.setItem(STOCK_KEY,JSON.stringify(stockData));persistSubscriptions();localStorage.setItem(RECIPE_KEY,JSON.stringify(customRecipes));
+  normalizeIncomeRecords();normalizeStockRecords();renderIncome();renderExpenses();renderStock();renderSubscriptions();renderDashboard();
+ }
+};
+
 normalizeIncomeRecords();normalizeStockRecords();initIncomeFilters();updateItemControls();renderIncome();renderExpenses();renderStock();$('subscriptionMonth').value=monthKey();$('subscriptionBillPeriod').value=monthKey();$('subscriptionPaymentDate').value=today();renderSubscriptions();renderDashboard();window.addEventListener('resize',()=>{if(!$('dashboard').hidden)renderFinancialChart($('month').value||monthKey())});
 });
 
